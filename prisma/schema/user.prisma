@@ -1,0 +1,31 @@
+enum Role {
+  CUSTOMER
+  SELLER
+  ADMIN
+  GUEST
+}
+
+enum UserStatus {
+  ACTIVE       
+  SUSPENDED
+}
+
+model User {
+  id          String     @id @default(ulid()) @map("id")
+  email       String?     @unique
+  password    String?
+  role        Role       @default(GUEST)
+  status      UserStatus @default(ACTIVE)
+  isVerified  Boolean    @default(false) @map("is_verified")
+  lastLoggedIn DateTime? @map("last_logged_in")
+  refreshTokens String[]  @default([]) @map("refresh_tokens")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  customer    Customer?
+  seller      Seller?
+  admin       Admin?
+
+  @@map("users")
+}
+

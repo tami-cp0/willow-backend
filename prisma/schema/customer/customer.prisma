@@ -1,0 +1,22 @@
+model Customer {
+  userId      String   @id @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstname   String   @db.VarChar(20)
+  lastname    String   @db.VarChar(20)
+  address     Json
+  points      Int      @default(0)
+  
+  orders               Order[]
+  reviews              Review[]
+  likedProducts        LikedProduct[]
+  redemptions          VoucherClaim[]
+  recycleActivities    RecycleActivity[]
+  recommendations      Recommendation[]
+  lastViewed           LastViewed[]
+
+  helpTickets          HelpTicket[]
+
+  @@map("customers")
+}
+

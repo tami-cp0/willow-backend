@@ -1,0 +1,17 @@
+// enum PaymentStatus {
+//   PENDING
+//   SUCCESS
+//   FAILED
+// }
+
+// model Payment {
+//   id                   String         @id @default(ulid())
+//   order                Order          @relation(fields: [orderId], references: [id])
+//   orderId              String         @map("order_id")
+//   status               PaymentStatus  @default(PENDING)
+//   transactionReference String         @unique @map("transaction_reference")
+//   amount               Float          
+//   createdAt            DateTime       @default(now()) @map("created_at")
+
+//   @@map("payments")
+// }

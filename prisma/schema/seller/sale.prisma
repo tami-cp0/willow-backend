@@ -1,0 +1,16 @@
+enum saleStatus {
+  REVERSED
+  FULFILLED
+}
+
+model Sale {
+  id          String    @id @default(ulid())
+  seller      Seller      @relation(fields: [sellerId], references: [userId])
+  sellerId    String    @map("seller_id")
+  orderItemId String    @map("order_id")
+  revenue     Float
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("sales")
+}

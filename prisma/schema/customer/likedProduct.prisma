@@ -1,0 +1,10 @@
+model LikedProduct {
+  customer    Customer  @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customerId  String    @map("customer_id")
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   String    @map("product_id")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([customerId, productId])
+  @@map("liked_products")
+}

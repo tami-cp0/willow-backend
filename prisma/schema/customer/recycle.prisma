@@ -1,0 +1,24 @@
+model RecycleLocation {
+  id                String            @id @default(ulid())
+  name              String            
+  address           Json              
+  description       String?           
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  recycleActivities RecycleActivity[]
+
+  @@map("recycle_locations")
+}
+
+model RecycleActivity {
+  id                String           @id @default(ulid())
+  customer          Customer         @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customerId        String           @map("customer_id")
+  recycleLocation   RecycleLocation  @relation(fields: [recycleLocationId], references: [id])
+  recycleLocationId String           @map("recycle_location_id")
+  pointsGained      Int              @map("points_gained")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  @@map("recycle_activities")
+}

@@ -1,0 +1,30 @@
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Product {
+  id                   String          @id @default(ulid()) @map("id")
+  name                 String          @db.VarChar(30)
+  description          String          @db.VarChar(255)
+  images               String[]       
+  quantity             Int             
+  category             String[]        
+  colors               String[]
+  price                Float        
+  approvalStatus       ApprovalStatus  @default(PENDING) @map("approval_status")
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
+
+  embedding            Unsupported("vector(768)")
+
+  sellerId             String          @map("seller_id")
+  seller               Seller            @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
+  reviews              Review[]
+  orderItems           OrderItem[]
+  recommendations      Recommendation[]
+  lastViewed           LastViewed[]
+
+  @@map("products")
+}

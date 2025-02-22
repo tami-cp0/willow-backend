@@ -1,0 +1,31 @@
+enum ticketStatus {
+  PENDING
+  RESOLVED
+}
+
+model HelpTicket {
+  id          String              @id @default(ulid())
+  user        User                @relation(fields: [userId], references: [id])
+  userId      String              @map("user_id")
+  subject     String              
+  description String              
+  status      ticketStatus        @default(PENDING)
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  responses   HelpTicketResponse[]
+
+  @@map("help_tickets")
+}
+
+model HelpTicketResponse {
+  id           String         @id @default(ulid())
+  helpTicket   HelpTicket     @relation(fields: [helpTicketId], references: [id])
+  helpTicketId String         @map("help_ticket_id")
+  admin        Admin           @relation(fields: [adminId], references: [userId])
+  adminId      String         @map("admin_id")
+  response     String         
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  @@map("help_ticket_responses")
+}

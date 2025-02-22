@@ -1,0 +1,35 @@
+enum discountType {
+  AMOUNT
+  PERCENTAGE
+}
+
+model Voucher {
+  id            String         @id @default(ulid())
+  code          String         @unique
+  discountType  discountType   @map("discount_type")
+  discount      Float          
+  pointsCost    Int            @map("points_cost")
+  quantity      Int            
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  admin         Admin           @relation(fields: [adminId], references: [userId])
+  adminId       String          @map("admin_id")
+
+  redemptions   VoucherClaim[]
+
+  @@map("vouchers")
+}
+
+model VoucherClaim {
+  id         String   @id @default(ulid())
+  customer   Customer @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customerId String   @map("customer_id")
+  voucher    Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  voucherId  String   @map("voucher_id")
+  redeemed   Boolean  @default(false)
+  quantity   Int      
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, voucherId])
+  @@map("voucher_claims")
+}

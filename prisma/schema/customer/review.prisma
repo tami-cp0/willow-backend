@@ -1,0 +1,12 @@
+model Review {
+  id         String   @id @default(ulid())
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String   @map("product_id")
+  customer   Customer @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customerId String   @map("customer_id")
+  rating     Int      // 1 - 5 scale
+  comment    String?  @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("reviews")
+}

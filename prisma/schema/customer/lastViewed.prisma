@@ -1,0 +1,11 @@
+model LastViewed {
+  customer    Customer  @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customerId  String    @map("customer_id")
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   String    @map("product_id")
+  viewedAt    DateTime  @default(now()) @map("viewed_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([customerId, productId])
+  @@map("last_viewed")
+}

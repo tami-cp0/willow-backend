@@ -1,0 +1,10 @@
+
+model Admin {
+  userId      String   @id @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  vouchers    Voucher[]
+  helpTicketResponses HelpTicketResponse[]
+
+  @@map("admins")
+}

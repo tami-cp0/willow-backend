@@ -1,0 +1,10 @@
+model Recommendation {
+  customer   Customer      @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customerId String    @map("customer_id")
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String    @map("product_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@unique([customerId, productId])
+  @@map("recommendations")
+}
