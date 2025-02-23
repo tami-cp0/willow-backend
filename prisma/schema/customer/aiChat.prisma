@@ -1,0 +1,17 @@
+enum AIChatStatus {
+    OPEN
+    CLOSED
+}
+
+model AIChat {
+  id          String     @id @default(ulid())
+  customer    Customer   @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customerId  String     @map("customer_id")
+  status      AIChatStatus @default(OPEN)
+  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  messages    ChatMessage[]
+
+  @@map("ai_chats")
+}
