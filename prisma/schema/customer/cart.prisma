@@ -1,8 +1,8 @@
 // draft
 model Cart {
-  id          String     @id @default(ulid())
   customer    Customer   @relation(fields: [customerId], references: [userId], onDelete: Cascade)
-  customerId  String     @map("customer_id")
+  customerId  String     @id @map("customer_id")
+
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
@@ -13,7 +13,7 @@ model Cart {
 
 model CartItem {
   id         String   @id @default(ulid())
-  cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cart       Cart     @relation(fields: [cartId], references: [customerId], onDelete: Cascade)
   cartId     String   @map("cart_id")
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId  String   @map("product_id")
