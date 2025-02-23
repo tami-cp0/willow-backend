@@ -30,6 +30,6 @@ model VoucherClaim {
   quantity   Int      
   createdAt  DateTime @default(now()) @map("created_at")
 
-  @@unique([userId, voucherId])
+  @@unique([customerId, voucherId])
   @@map("voucher_claims")
 }
