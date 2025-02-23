@@ -1,0 +1,14 @@
+model Message {
+  id              String     @id @default(ulid())
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId  String
+//   sender          User       @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId        String     @map("sender_id")
+//   receiver        User       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId      String     @map("receiver_id")
+  content         String
+  isReported      Boolean    @default(false)
+  createdAt       DateTime   @default(now()) @map("created_at")
+
+  @@map("messages")
+}
