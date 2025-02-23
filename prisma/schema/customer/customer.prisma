@@ -7,6 +7,7 @@ model Customer {
   address     Json
   points      Int      @default(0)
   
+  cart                 Cart?
   orders               Order[]
   reviews              Review[]
   likedProducts        LikedProduct[]
@@ -14,8 +15,9 @@ model Customer {
   recycleActivities    RecycleActivity[]
   recommendations      Recommendation[]
   lastViewed           LastViewed[]
+  conversations        Conversation[]
+  AIConversations      AIChat[]
 
-  helpTickets          HelpTicket[]
 
   @@map("customers")
 }
