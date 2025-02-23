@@ -7,8 +7,7 @@ model Seller {
 
   sales    Sale[]
   products Product[]
-
-  helpTickets HelpTicket[]
+  conversations        Conversation[]
 
   @@map("sellers")
 }
