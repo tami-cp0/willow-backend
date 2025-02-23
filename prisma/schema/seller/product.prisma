@@ -8,16 +8,17 @@ model Product {
   id                   String          @id @default(ulid()) @map("id")
   name                 String          @db.VarChar(30)
   description          String          @db.VarChar(255)
-  images               String[]       
+  images               String[]        @default([])
   quantity             Int             
-  category             String[]        
-  colors               String[]
+  category             String        
+  colors               Json?  // store json array or null
+  size                 Json?  // store json array or null  
   price                Float        
   approvalStatus       ApprovalStatus  @default(PENDING) @map("approval_status")
   createdAt            DateTime        @default(now()) @map("created_at")
   updatedAt            DateTime        @updatedAt @map("updated_at")
 
-  embedding            Unsupported("vector(768)")
+  embedding            Unsupported("vector(768)")?
 
   sellerId             String          @map("seller_id")
   seller               Seller            @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
@@ -25,6 +26,8 @@ model Product {
   orderItems           OrderItem[]
   recommendations      Recommendation[]
   lastViewed           LastViewed[]
+  likedProducts        LikedProduct[]
+  cartItems            CartItem[]
 
   @@map("products")
 }
