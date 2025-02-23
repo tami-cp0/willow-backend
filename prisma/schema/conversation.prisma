@@ -1,0 +1,16 @@
+model Conversation {
+  id          String     @id @default(ulid())
+  customer    Customer   @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customerId  String     @map("customer_id")
+  seller      Seller     @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
+  sellerId    String     @map("seller_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  isFlagged   Boolean    @default(false)
+
+  messages    Message[]
+
+  @@unique([customerId, sellerId])
+  @@map("conversations")
+}
