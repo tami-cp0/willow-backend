@@ -1,10 +1,12 @@
 import { Router, Request, Response, NextFunction } from "express";
 import authRouter from "./auth";
 import { CustomError, handleError } from "../utils/errorHandler";
+import userRouter from "./user";
 
 const router = Router();
 
 router.use('/api/v1/auth', authRouter);
+router.use('/api/v1/users', userRouter);
 
 router.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
     handleError(err, res);
