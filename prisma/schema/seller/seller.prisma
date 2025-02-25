@@ -2,8 +2,8 @@ model Seller {
   userId      String   @id @map("user_id")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  username    String   @db.VarChar(20)
-  bio         String   @db.VarChar(255)
+  storename    String   @unique @db.VarChar(20)
+  bio         String?   @db.VarChar(255)
 
   sales    Sale[]
   products Product[]
