@@ -2,7 +2,6 @@ enum Role {
   CUSTOMER
   SELLER
   ADMIN
-  GUEST
 }
 
 enum UserStatus {
@@ -14,7 +13,7 @@ model User {
   id          String     @id @default(ulid()) @map("id")
   email       String?    @unique
   password    String?
-  role        Role       @default(GUEST)
+  role        Role       
   status      UserStatus @default(ACTIVE)
   isVerified  Boolean    @default(false) @map("is_verified")
   lastLoggedIn DateTime? @map("last_logged_in")
