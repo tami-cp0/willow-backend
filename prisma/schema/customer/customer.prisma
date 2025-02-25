@@ -4,7 +4,7 @@ model Customer {
 
   firstname   String   @db.VarChar(20)
   lastname    String   @db.VarChar(20)
-  address     Json
+  address     Json?
   points      Int      @default(0)
   
   cart                 Cart?
