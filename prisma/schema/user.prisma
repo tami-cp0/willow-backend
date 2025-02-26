@@ -17,7 +17,8 @@ model User {
   status      UserStatus @default(ACTIVE)
   isVerified  Boolean    @default(false) @map("is_verified")
   lastLoggedIn DateTime? @map("last_logged_in")
-  refreshTokens String[] @default([]) @map("refresh_tokens")
+  lastKnownIp String?     @map("last_known_ip")
+  refreshToken       String?     @map("refresh_token")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
