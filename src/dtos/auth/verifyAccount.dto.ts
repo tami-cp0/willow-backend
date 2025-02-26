@@ -19,7 +19,7 @@ class IsEmailRegistered implements ValidatorConstraintInterface {
   }
 }
 
-class CreateUserDto {
+class VerifyAccountDto {
   @IsNotEmpty({ message: 'Email is required' })
   @IsEmail({}, { message: 'Invalid email address' })
   @Validate(IsEmailRegistered)
@@ -32,7 +32,7 @@ class CreateUserDto {
 
 
 async function validateVerifyAccountDto(req: Request): Promise<void> {
-  const dtoInstance = plainToInstance(CreateUserDto, req.body);
+  const dtoInstance = plainToInstance(VerifyAccountDto, req.body);
   const errors = await validate(dtoInstance);
 
   if (errors.length > 0) {

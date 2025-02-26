@@ -14,7 +14,7 @@ import { plainToInstance } from 'class-transformer';
 import { Request } from 'express';
   
   @ValidatorConstraint({ async: true })
-  export class IsUniqueStorenameConstraint implements ValidatorConstraintInterface {
+  class IsUniqueStorenameConstraint implements ValidatorConstraintInterface {
     async validate(storename: string) {
       if (!storename) { return false; }
 
