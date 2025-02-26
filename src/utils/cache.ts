@@ -2,6 +2,8 @@ import { config } from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { createClient, RedisClientType } from 'redis';
 import { ErrorHandler } from './errorHandler';
+import { CustomJwtPayload } from '../interfaces';
+import { User } from '@prisma/client';
 
 config();
 
@@ -45,54 +47,51 @@ class RedisClient {
 		}
 	}
 
-	// /**
-	//  * Blacklists the given access token.
-	//  * @param {string} userId - The user ID.
-	//  * @param {string} accessToken - The access token to blacklist.
-	//  * @returns {Promise<ErrorHandler | void>}
-	//  */
-	// public async blacklistAccessToken(userId: mongoose.Schema.Types.ObjectId, accessToken: string): Promise<ErrorHandler | void> {
-	// 	this.checkCacheConnection();
+	/**
+	 * Blacklists the given access token.
+	 * @param {string} userId - The user ID.
+	 * @param {string} accessToken - The access token to blacklist.
+	 * @returns {Promise<ErrorHandler | void>}
+	 */
+	public async blacklistAccessToken(userId: string, accessToken: string): Promise<ErrorHandler | void> {
+		const decoded: CustomJwtPayload = jwt.verify(accessToken, process.env.JWT_SECRET as string) as CustomJwtPayload; 
 
-	// 	const decoded: CustomJwtPayload = jwt.verify(accessToken, process.env.JWT_SECRET as string) as CustomJwtPayload; 
+		const jwtExp = decoded.exp as number;
+		const currentTime = Math.floor(Date.now() / 1000);
+		const expirationTime = jwtExp - currentTime;
 
-	// 	const jwtExp = decoded.exp as number;
-	// 	const currentTime = Math.floor(Date.now() / 1000);
-	// 	const expirationTime = jwtExp - currentTime;
+		try {
+			const blacklistKey = `${userId}:token-blacklist`;
+			await this.client.sAdd(blacklistKey, accessToken);
 
-	// 	try {
-	// 		const blacklistKey = `${userId}:blacklist`;
-	// 		this.client.sAdd(blacklistKey, accessToken);
-
-	// 		// set the set to expire when the last token in the set has expired
-	// 		this.client.expire(blacklistKey, expirationTime);
-	// 	} catch (error) {
-	// 		return new ErrorHandler(500, 'Internal server error - Failed to blacklist access token.');
-	// 	}
-	// }
-
-
-// 	/**
-//  * Checks if the given access token is blacklisted.
-//  * @param {string} userId - The user ID.
-//  * @param {string} accessToken - The access token to check.
-//  * @returns {Promise<ErrorHandler | boolean>}
-//  */
-// public async isAccessTokenBlacklisted(userId: mongoose.Schema.Types.ObjectId, accessToken: string): Promise<ErrorHandler | boolean> {
-//     this.checkCacheConnection();
-
-//     try {
-//         const blacklistKey = `${userId.toString()}:blacklist`;
-//         return await this.client.sIsMember(blacklistKey, accessToken);
-//     } catch (error) {
-// 		return new ErrorHandler(500, 'Internal server error - Failed to blacklist access token.');
-//     }
-// }
+			// set the set to expire when the last token in the set has expired
+			await this.client.expire(blacklistKey, expirationTime);
+		} catch (error) {
+			console.error(error);
+			return new ErrorHandler(500, 'Internal server error - Failed to blacklist access token.');
+		}
+	}
 
 
 	/**
+	 * Checks if the given access token is blacklisted.
+	 * @param {string} userId - The user ID.
+	 * @param {string} accessToken - The access token to check.
+	 * @returns {Promise<ErrorHandler | boolean>}
+	 */
+	public async isAccessTokenBlacklisted(userId: string, accessToken: string): Promise<ErrorHandler | boolean> {
+		try {
+			const blacklistKey = `${userId}:token-blacklist`;
+			return await this.client.sIsMember(blacklistKey, accessToken);
+		} catch (error) {
+			console.error(error);
+			return new ErrorHandler(500, 'Internal server error - Failed to check if access token is blacklisted.');
+		}
+	}
+
+	/**
 	 * Generates and saves an OTP for the given email.
-	 * @param email - email to associate with the OTP.
+	 * @param {string} email - email to associate with the OTP.
 	 * @param {string} otp - The OTP to save.
 	 * @returns ErrorHandler if the cache is down.
 	 */
@@ -100,7 +99,8 @@ class RedisClient {
 		email: string, otp: string
 	): Promise<void> {
 		try {
-			await this.client.set(email, otp, { EX: 5 * 60 * 1000 }); // 5 minutes
+			const key = `otp-${email}`;
+			await this.client.set(key, otp, { EX: 5 * 60 }); // 5 minutes
 		} catch (error) {
             console.error(`Failed to save otp in cache for ${email}`);
 			throw new ErrorHandler(500, 'Internal server error');
@@ -118,7 +118,8 @@ class RedisClient {
 		otp: string
 	): Promise<boolean | void> {
 		try {
-			const userOtp = await this.client.get(email);
+			const key = `otp-${email}`;
+			const userOtp = await this.client.get(key);
 			if (userOtp === otp) {
 				return true;
 			}
@@ -129,63 +130,56 @@ class RedisClient {
 		}
 	}
 
-	// /**
-	//  * Stores user info in the cache with a TTL of 5 minutes.
-	//  * @param {IUser} user - The user document to store.
-	//  * @returns {Promise<ErrorHandler | void>}
-	//  */
-	// public async storeUser(user: IUser): Promise<ErrorHandler | void> {
-	// 	this.checkCacheConnection();
-	
-	// 	try {
-	// 		const key = `user-${user._id}`;
-	// 		const value = JSON.stringify(user.toObject());
-	// 		await this.client.set(key, value, { EX: 5 * 60 });
-	// 		console.log('object: ', user.toObject());
-	// 	} catch (error) {
-	// 		console.error(error);
-	// 		return new ErrorHandler(500, 'Internal server error - Failed to store user info.');
-	// 	}
-	// }
+	/**
+	 * Stores user info in the cache with a TTL of 5 minutes.
+	 * @param {User} user - The user document to store.
+	 * @returns {Promise<ErrorHandler | void>}
+	 */
+	public async storeUser(user: User): Promise<ErrorHandler | void> {
+		try {
+			const key = `user-${user.id}`;
+			const value = JSON.stringify(user);
+			await this.client.set(key, value, { EX: 5 * 60 });
+		} catch (error) {
+			console.error(error);
+			return new ErrorHandler(500, 'Internal server error - Failed to store user info.');
+		}
+	}
   
-	// /**
-	//  * Retrieves user info from the cache and converts it back to a Mongoose document.
-	//  * @param {string} userId - The user ID.
-	//  * @returns {Promise<ErrorHandler | IUser | null>}
-	//  */
-	// public async getUser(userId: string | mongoose.Schema.Types.ObjectId): Promise<ErrorHandler | IUser | null> {
-	// 	this.checkCacheConnection();
-	
-	// 	try {
-	// 		const key = `user-${userId}`;
-	// 		const user = await this.client.get(key);
-	// 		if (user) {
-	// 			const userObject = JSON.parse(user);
-	// 			return User.hydrate(userObject);
-	// 		}
-	// 		return null;
-	// 	} catch (error) {
-	// 		console.error(error);
-	// 		return new ErrorHandler(500, 'Internal server error - Failed to retrieve user info.');
-	// 	}
-	// }
+	/**
+	 * Retrieves user info from the cache and converts it back to a Mongoose document.
+	 * @param {string} userId - The user ID.
+	 * @returns {Promise<ErrorHandler | IUser | null>}
+	 */
+	public async getUser(userId: string): Promise<User | null> {
+		try {
+			const key = `user-${userId}`;
+			const user = await this.client.get(key);
+			if (user) {
+				const userObject = JSON.parse(user) as User;
+				return userObject;
+			}
+			return null;
+		} catch (error) {
+			console.error(error);
+			throw new ErrorHandler(500, 'Internal server error - Failed to retrieve user info.');
+		}
+	}
 
-  	// /**
-	//  * Removes user info from the cache.
-	//  * @param {string} userId - The user ID.
-	//  * @returns {Promise<ErrorHandler | void>}
-	//  */
-	// public async removeUser(userId: string | mongoose.Schema.Types.ObjectId): Promise<ErrorHandler | void> {
-	// 	this.checkCacheConnection();
-	
-	// 	try {
-	// 		const key = `user-${userId}`;
-	// 		await this.client.del(key);
-	// 	} catch (error) {
-	// 		console.error(error);
-	// 		return new ErrorHandler(500, 'Internal server error - Failed to remove user info.');
-	// 	}
-	// }
+  	/**
+	 * Removes user info from the cache.
+	 * @param {string} userId - The user ID.
+	 * @returns {Promise<ErrorHandler | void>}
+	 */
+	public async removeUser(userId: string): Promise<ErrorHandler | void> {
+		try {
+			const key = `user-${userId}`;
+			await this.client.del(key);
+		} catch (error) {
+			console.error(error);
+			return new ErrorHandler(500, 'Internal server error - Failed to remove user info.');
+		}
+	}
 }
 
 const cache = new RedisClient();
