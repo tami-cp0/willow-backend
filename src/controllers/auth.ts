@@ -242,7 +242,7 @@ class authController {
             sameSite: 'none'
           }); // 7d
       
-          return res.status(200).end();
+          res.status(200).end();
         } catch (error) {
           return next(error);
         }
