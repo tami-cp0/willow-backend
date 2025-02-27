@@ -1,7 +1,7 @@
 /**
  * @openapi
  * /auth/password-reset:
- *   post:
+ *   patch:
  *     summary: Reset user password
  *     description: >
  *       Resets the user's password using a provided reset token (passed as a query parameter)
