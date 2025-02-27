@@ -11,7 +11,7 @@ config();
 const app = express();
 
 const port: number = Number(process.env.PORT) || 3000;
-const host: string = '127.0.0.1';
+const host: string = '0.0.0.0';
 const serverURL: string = process.env.BACKEND_URL as string;
 
 let prisma: PrismaClient = new PrismaClient();
