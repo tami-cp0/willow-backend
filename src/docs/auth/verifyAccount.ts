@@ -1,7 +1,7 @@
 /**
  * @openapi
  * /auth/verify-account:
- *   post:
+ *   patch:
  *     summary: Verify user account using OTP
  *     description: >
  *       Verifies a user's account by validating the provided email and OTP.

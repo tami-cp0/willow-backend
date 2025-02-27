@@ -4,8 +4,7 @@
  *   patch:
  *     summary: Reset user password
  *     description: >
- *       Resets the user's password using a provided reset token (passed as a query parameter)
- *       and a new password. The new password must be confirmed and meet the minimum length requirement.
+ *       Resets the user's password.
  *       This endpoint is rate limited to 5 requests per minute.
  *     tags:
  *       - Auth

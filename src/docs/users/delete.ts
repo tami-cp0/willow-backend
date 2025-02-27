@@ -1,22 +1,28 @@
 /**
  * @openapi
- * /auth/refresh-tokens:
- *   post:
- *     summary: Refresh access and refresh tokens
+ * /users/{userId}/delete:
+ *   delete:
+ *     summary: Delete a user account
  *     description: >
- *       Refreshes the JWT access token and refresh token for the authenticated user.
- *       On success, new tokens are set as cookies.
+ *       Deletes the account of the authenticated user.
  *       Rate limited to 1 request per minute.
  *     tags:
- *       - Auth
+ *       - Users
  *     security:
  *       - cookieAuth: []
- *       - refreshCookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the user to delete.
  *     responses:
- *       200:
- *         description: Tokens refreshed successfully. New tokens are set as cookies.
+ *       204:
+ *         description: User deleted successfully. No content is returned.
  *       401:
- *         description: Unauthorized. Possible reasons include missing or invalid tokens.
+ *         description: Unauthorized. Possible reasons include missing or invalid access token,
+ *           token blacklisting, or token verification failure.
  *         content:
  *           application/json:
  *             schema:
@@ -27,13 +33,8 @@
  *                 message:
  *                   type: string
  *             examples:
- *               missingToken:
- *                 summary: Missing refresh token
- *                 value:
- *                   status: "fail"
- *                   message: "Login required"
- *               invalidToken:
- *                 summary: Invalid refresh token
+ *               loginRequired:
+ *                 summary: Missing or invalid access token
  *                 value:
  *                   status: "fail"
  *                   message: "Login required"
