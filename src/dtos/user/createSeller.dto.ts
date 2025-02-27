@@ -14,12 +14,12 @@ import { plainToInstance } from 'class-transformer';
 import { Request } from 'express';
   
   @ValidatorConstraint({ async: true })
-  class IsUniqueStorenameConstraint implements ValidatorConstraintInterface {
-    async validate(storename: string) {
-      if (!storename) { return false; }
+  class IsUniqueBusinessNameConstraint implements ValidatorConstraintInterface {
+    async validate(businessName: string) {
+      if (!businessName) { return false; }
 
       const existingSeller = await prisma.seller.findUnique({
-        where: { storename },
+        where: { businessName },
       });
       return !existingSeller; // true if username is unique
     }
@@ -30,11 +30,11 @@ import { Request } from 'express';
   }
   
   class CreateSellerDto {
-    @IsString({ message: 'Storename must be a string' })
-    @IsNotEmpty({ message: 'Storename is required' })
-    @Length(3, 20, { message: 'Storename must be between 3 and 20 characters' })
-    @Validate(IsUniqueStorenameConstraint)
-    storename!: string;
+    @IsString({ message: 'Business name must be a string' })
+    @IsNotEmpty({ message: 'Business name is required' })
+    @Length(3, 20, { message: 'Business name must be between 3 and 20 characters' })
+    @Validate(IsUniqueBusinessNameConstraint)
+    businessName!: string;
   
     @IsOptional()
     @Length(3, 255, { message: 'Bio must be under 255 characters' })
