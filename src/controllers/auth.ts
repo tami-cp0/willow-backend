@@ -1,15 +1,18 @@
 import { config } from "dotenv";
 import { Response, Request, NextFunction } from "express";
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import prisma from "../app";
 import cache from "../utils/cache";
 import validateVerifyAccountDto from "../dtos/auth/verifyAccount.dto";
 import { ErrorHandler } from "../utils/errorHandler";
 import validateResendOtpDto from "../dtos/auth/resendOtp.dto";
-import { newLoginLocationEmailTemplate, otpEmailTemplate, sendEmail } from "../utils/emails";
+import { sendEmail } from "../utils/sendEmails";
 import { CustomJwtPayload } from "../interfaces";
 import validateLoginDto from "../dtos/auth/login.dto";
 import { User } from "@prisma/client";
+import validateForgotPasswordDto from "../dtos/auth/forgotPassword.dto";
+import validateResetPasswordDto from "../dtos/auth/resetPassword.dto";
 
 config();
 
@@ -94,7 +97,7 @@ class authController {
 
             const { email } = req.body;
 
-            sendEmail('otp', otpEmailTemplate, email);
+            sendEmail('otp', email);
 
             res.status(200).json({
                 status: 'success',
@@ -140,7 +143,7 @@ class authController {
             let data: any = { refreshToken, lastLoggedIn: new Date() };
 
             if (req.ip !== user.lastKnownIp) {
-                sendEmail('login_location', newLoginLocationEmailTemplate, email, req.ip);
+                sendEmail('login_location', email, req.ip);
 
                 data['lastKnownIp'] = req.ip;
             }
@@ -246,7 +249,61 @@ class authController {
         } catch (error) {
           return next(error);
         }
-      }
+    }
+
+    static async forgotPassword(req: Request, res: Response, next: NextFunction) {
+		try {
+            await validateForgotPasswordDto(req);
+
+		    const email= req.body.email;
+
+			const resetToken: string = jwt.sign(
+				{ email, reset: true },
+				process.env.JWT_SECRET as string,
+				{ expiresIn: '10min' }
+			);
+
+            sendEmail('password_reset', email, resetToken);
+
+			res.status(200).json({
+				status: 'success',
+				message: 'A password reset link has been sent to your email',
+                data: resetToken
+			});
+		} catch (error) {
+			return next(error);
+		}
+	}
+
+    static async resetPassword(req: Request, res: Response, next: NextFunction) {
+		try {
+            await validateResetPasswordDto(req);
+
+		    const { newPassword } = req.body;
+
+            const resetToken = req.query.resetToken as string;
+
+            if (!resetToken) {
+                return next(new ErrorHandler(400, 'resetToken is required'));
+            }
+
+            const decoded = jwt.verify(resetToken, process.env.JWT_SECRET as string, { ignoreExpiration: true }) as CustomJwtPayload;
+
+			await prisma.user.update({
+                where: {
+                    email: decoded.email
+                },
+                data: { password: await bcrypt.hash(newPassword, 10)}
+            })
+
+			res.status(200).json({
+				status: 'success',
+				message: 'Password has been successfully reset'
+			});
+		} catch (error) {
+			return next(error);
+		}
+	}
 }
 
 export default authController;
