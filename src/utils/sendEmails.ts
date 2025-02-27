@@ -5,7 +5,7 @@ import { ErrorHandler } from "./errorHandler";
 
 config();
 
-export const otpEmailTemplate = ['Acconut verification', `
+const otpEmailTemplate = ['Acconut verification', `
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,12 +24,12 @@ export const otpEmailTemplate = ['Acconut verification', `
         <p>Use the following OTP to verify your account:</p>
         <p class="otp"><otp_code></p>
         <p>This OTP is valid for 5 minutes. Do not share it with anyone.</p>
-        <div class="footer">&copy; 2025 Your Company Name</div>
+        <div class="footer">&copy; 2025 Willow</div>
     </div>
 </body>
 </html>`]
 
-export const passwordResetEmailTemplate = ['Password Reset', `
+const passwordResetEmailTemplate = ['Password Reset', `
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -46,14 +46,15 @@ export const passwordResetEmailTemplate = ['Password Reset', `
     <div class="container">
         <h2>Password Reset Request</h2>
         <p>We received a request to reset your password. Click the button below to proceed:</p>
-        <p><a href="${process.env.FRONTEND_PASSWORD_RESET_LINK}" class="btn">Reset Password</a></p>
+        <p><a href="${process.env.FRONTEND_PASSWORD_RESET_LINK}?resetToken=<reset_token>" class="btn">Reset Password</p>
+        <p>This OTP is valid for 5 minutes. Do not share it with anyone.</p>
         <p>If you did not request a password reset, please ignore this email.</p>
-        <div class="footer">&copy; 2025 Your Company Name</div>
+        <div class="footer">&copy; 2025 Willow</div>
     </div>
 </body>
 </html>`]
 
-export const newLoginLocationEmailTemplate = ['New Login Location Detected', `
+const newLoginLocationEmailTemplate = ['New Login Location Detected', `
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -76,7 +77,7 @@ export const newLoginLocationEmailTemplate = ['New Login Location Detected', `
                 <p><strong>Time:</strong> ${new Date()}</p>
             </div>
             <p>If this was you, no action is needed. If you do not recognize this activity, please contact our support team immediately.</p>
-            <div class="footer">&copy; 2025 Your Company Name</div>
+            <div class="footer">&copy; 2025 Willow</div>
         </div>
     </body>
     </html>`]
@@ -86,27 +87,44 @@ const generateOTP = (length = 6): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp', emailTemplate: string[], email: string, ip?: string) {
+export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp', email: string, ip?: string, resetToken?: string) {
     try {
-        let bodyHtml: string = emailTemplate[1];
+        let html: string[] = otpEmailTemplate; // default
 
         if (type === 'otp') {
             const otp = generateOTP();
 
             cache.saveOTP(email, otp);
-            bodyHtml = bodyHtml.replace('<otp_code>', otp);
+            html[1] = otpEmailTemplate[1].replace('<otp_code>', otp);
         } else if (type === 'login_location') {
             if (!ip) {
-                console.error('ip is missing for login location')
-                throw new ErrorHandler(500, 'Internal server error - email')
+                console.error('IP is missing for login location');
+                throw new ErrorHandler(500, 'Internal server error');
             }
-            const res = await fetch('http://ip-api.com/json/');
-            const data = await res.json();
+            try {
+                const res = await fetch(`http://ip-api.com/json/${ip}`);
+                if (!res.ok) {
+                    console.error('Failed to fetch IP location:');
+                    throw new ErrorHandler(500, 'Failed to get IP location');
+                }
+                const data = await res.json();
+                html = newLoginLocationEmailTemplate;
+                html[1] = html[1]
+                    .replace('<location>', `${data.country}, ${data.regionName}, ${data.city}.`)
+                    .replace('<ip_address>', ip);
+            } catch (error) {
+                console.error('Error fetching IP location:', error);
+                throw new ErrorHandler(500, 'Failed to fetch IP location');
+            }
+        } else if (type === 'password_reset') {
+            if (!resetToken) {
+                console.error('accessToken is required')
+                throw new ErrorHandler(500, 'Internal server error')
+            }
 
-            bodyHtml = bodyHtml.replace('<location>', `${data.country}, ${data.regionName}, ${data.city}.`);
-            bodyHtml = bodyHtml.replace('<ip_address>', ip);
+            html = passwordResetEmailTemplate;
+            html[1] = html[1].replace('<reset_token>', resetToken);
         }
-
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -118,8 +136,10 @@ export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp
         transporter.sendMail({
             from: process.env.EMAIL,
             to: email,
-            subject: emailTemplate[0],
-            html: bodyHtml
+            subject: html[0],
+            html: html[1]
+        }).catch(error => {
+            console.error('Failed to send email:', error);
         });   
     } catch (error) {
         return error;
