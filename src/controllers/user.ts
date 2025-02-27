@@ -1,21 +1,17 @@
-import { config } from "dotenv";
 import { Response, Request, NextFunction } from "express";
 import prisma from "../app";
 import bcrypt from 'bcryptjs';
 import { otpEmailTemplate, sendEmail } from "../utils/emails";
-import cache from "../utils/cache";
 import validateCreateUserDto from "../dtos/user/createUser.dto";
-import validateVerifyAccountDto from "../dtos/user/verifyAccount.dto";
 import { ErrorHandler } from "../utils/errorHandler";
-
-config()
+import { Seller, User } from "@prisma/client";
 
 class userController {
     static async register(req: Request, res: Response, next: NextFunction) {
         try {
             await validateCreateUserDto(req);
 
-            const { email, password, role, storename, firstname, lastname, address } = req.body;
+            const { email, password, role, businessName, firstname, lastname, address } = req.body;
     
             await prisma.user.create({
                 data: {
@@ -23,11 +19,11 @@ class userController {
                     password: await bcrypt.hash(password, 10),
                     role,
                     ...(role === 'CUSTOMER' && { customer: { create: { firstname, lastname } } }),
-                    ...(role === 'SELLER' && { seller: { create: { storename } } }),
+                    ...(role === 'SELLER' && { seller: { create: { businessName } } }),
                 },
             });
 
-            sendEmail(otpEmailTemplate, email);
+            sendEmail('otp', otpEmailTemplate, email);
 
             res.status(201).json({
                 status: 'success',
@@ -38,43 +34,85 @@ class userController {
         }
     }
 
-    static async verifyAccount(req: Request, res: Response, next: NextFunction) {
+    static async getSeller(req: Request, res: Response, next: NextFunction) {
         try {
-            await validateVerifyAccountDto(req);
-
-            const { email, otp } = req.body;
-
-            if (!(await cache.isOtpValid(email, otp))) {
-                throw new ErrorHandler(401, 'Invalid OTP');
+            const userId = req.params.sellerId;
+            if (!userId) {
+            return next(new ErrorHandler(400, 'Seller ID is required'));
             }
 
-            const user = await prisma.user.update({
+            const user = await prisma.seller.findUnique({
                 where: {
-                    email
-                },
-                data: {
-                    isVerified: true,
-                    lastLoggedIn: new Date()
+                    userId
                 },
                 include: {
-                    seller: true,
-                    customer: true,
-                },
+                    sales: true,
+                    products: {
+                        include: {
+                            reviews: true
+                        }
+                    },
+                    conversations: {
+                        include: {
+                            messages: true
+                        }
+                    }
+                }
             });
 
-            // set jwt cookie
-            // maybe move this to under auth
+            if (!user) {
+                return next(new ErrorHandler(404, "Seller not found"));
+            }
 
-            res.status(201).json({
+            res.status(200).json({
                 status: 'success',
-                message: 'Successfully logged in',
                 data: user
-            });
+            })
+            
         } catch (error) {
             next(error);
         }
     }
 
+    // static async updateSeller(req: Request, res: Response, next: NextFunction) {
+    //     try {
+    //         const userId = req.params.sellerId;
+    //         if (!userId) {
+    //         return next(new ErrorHandler(400, 'Seller ID is required'));
+    //         }
+
+    //         const user = await prisma.seller.findUnique({
+    //             where: {
+    //                 userId
+    //             },
+    //             include: {
+    //                 sales: true,
+    //                 products: {
+    //                     include: {
+    //                         reviews: true
+    //                     }
+    //                 },
+    //                 conversations: {
+    //                     include: {
+    //                         messages: true
+    //                     }
+    //                 }
+    //             }
+    //         });
+
+    //         if (!user) {
+    //             return next(new ErrorHandler(404, "Seller not found"));
+    //         }
+
+    //         res.status(200).json({
+    //             status: 'success',
+    //             data: user
+    //         })
+            
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
 }
 
 export default userController;
