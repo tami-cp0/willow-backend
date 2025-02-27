@@ -16,7 +16,7 @@ model Customer {
   recommendations      Recommendation[]
   lastViewed           LastViewed[]
   conversations        Conversation[]
-  AIConversations      AIChat[]
+  AIChats              AIChat[]
 
 
   @@map("customers")
