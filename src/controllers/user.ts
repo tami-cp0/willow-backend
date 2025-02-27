@@ -1,10 +1,9 @@
 import { Response, Request, NextFunction } from "express";
 import prisma from "../app";
 import bcrypt from 'bcryptjs';
-import { otpEmailTemplate, sendEmail } from "../utils/emails";
+import { sendEmail } from "../utils/sendEmails";
 import validateCreateUserDto from "../dtos/user/createUser.dto";
 import { ErrorHandler } from "../utils/errorHandler";
-import { Seller, User } from "@prisma/client";
 
 class userController {
     static async register(req: Request, res: Response, next: NextFunction) {
@@ -23,7 +22,7 @@ class userController {
                 },
             });
 
-            sendEmail('otp', otpEmailTemplate, email);
+            sendEmail('otp', email);
 
             res.status(201).json({
                 status: 'success',
