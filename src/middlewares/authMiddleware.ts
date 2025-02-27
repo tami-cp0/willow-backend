@@ -6,7 +6,7 @@ import cache from "../utils/cache";
 import { User } from "@prisma/client";
 import prisma from "../app";
 
-async function authMidlleware(req: Request, res: Response, next: NextFunction) {
+async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     const accessToken: string | undefined = req.cookies?.accessToken;
     const secret: string = process.env.JWT_SECRET as string;
 
@@ -23,7 +23,7 @@ async function authMidlleware(req: Request, res: Response, next: NextFunction) {
 
         let user: User | null = await cache.getUser(decoded._id);
         if (!user) {
-            const user: User | null = await prisma.user.findUnique({
+            user = await prisma.user.findUnique({
                 where: {
                     id: decoded.id
                 }
@@ -34,20 +34,13 @@ async function authMidlleware(req: Request, res: Response, next: NextFunction) {
             await cache.storeUser(user);
         }
 
-        req.user = user as User;
+        req.user = user;
 
         return next();
     } catch (error: any) {
-        if (error.name === 'TokenExpiredError') {
-            const payload: CustomJwtPayload = jwt.decode(req.cookies?.accessToken) as CustomJwtPayload;
-
-            if (payload && payload.reset) {
-                return next(new ErrorHandler(401, 'Password reset link has expired'));
-            }
-        }
         console.log(error);
         return next(new ErrorHandler(401, "Login required"));
     }
 }
 
-export default authMidlleware;
+export default authMiddleware;
