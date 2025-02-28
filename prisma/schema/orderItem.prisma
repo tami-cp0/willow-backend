@@ -1,0 +1,40 @@
+enum CustomerOrderItemStatus {
+  PENDING
+  ORDERED
+  SHIPPED
+  DELIVERED
+  RETURNED
+  REFUNDED
+  CANCELLED
+}
+
+enum SellerOrderItemStatus {
+  NEW
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+model OrderItem {
+  id                  String                  @id @default(ulid())
+  order               Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId             String                  @map("order_id")
+  product             Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId           String                  @map("product_id")
+  seller              Seller                  @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
+  sellerId            String                  @map("seller_id")
+  
+  customerStatus      CustomerOrderItemStatus @default(ORDERED) @map("customer_status")
+  sellerStatus        SellerOrderItemStatus   @default(PROCESSING) @map("seller_status")
+
+  customerCancelMessage String?
+  sellerCancelMessage String?
+  
+  quantity            Int
+  price               Float
+
+  @@unique([orderId, productId, sellerId])
+  @@map("order_items")
+}

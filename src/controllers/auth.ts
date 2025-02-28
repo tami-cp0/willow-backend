@@ -142,7 +142,7 @@ class authController {
 
             let data: any = { refreshToken, lastLoggedIn: new Date() };
 
-            if (req.ip !== user.lastKnownIp) {
+            if (req.ip && user.lastKnownIp && req.ip !== user.lastKnownIp) {
                 sendEmail('login_location', email, req.ip);
 
                 data['lastKnownIp'] = req.ip;
@@ -266,7 +266,7 @@ class authController {
 				{ expiresIn: '10min' }
 			);
 
-            sendEmail('password_reset', email, resetToken);
+            sendEmail('password_reset', email, '', resetToken);
 
 			res.status(200).json({
 				status: 'success',
