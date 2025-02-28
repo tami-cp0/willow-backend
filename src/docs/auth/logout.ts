@@ -25,7 +25,7 @@
  *                   type: string
  *                 message:
  *                   type: string
- *             examples:
+ *             example:
  *               loginRequired:
  *                 summary: Missing or invalid access token
  *                 value:
@@ -42,7 +42,7 @@
  *                   type: string
  *                 message:
  *                   type: string
- *             examples:
+ *             example:
  *               accountNotVerified:
  *                 summary: Account is not verified
  *                 value:
@@ -59,7 +59,7 @@
  *                   type: string
  *                 message:
  *                   type: string
- *             examples:
+ *             example:
  *               accountNotFound:
  *                 summary: Account not found
  *                 value:
