@@ -12,3 +12,6 @@ ai call limit:
 Requests per Minute (RPM): 15
 Requests per Day (RPD): 1,500
 Tokens per Minute (TPM): 1,000,000
+RE
+
+site logo for email
