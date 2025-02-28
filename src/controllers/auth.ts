@@ -48,8 +48,8 @@ class authController {
             const accessToken: string = jwt.sign(
                 payload,
                 process.env.JWT_SECRET as string,
-                { expiresIn: '5min' }
-            );
+                { expiresIn: '7d' }
+            ); // temporarily 7 days
 
             const refreshToken: string = jwt.sign(
                 payload,
@@ -66,11 +66,11 @@ class authController {
             ]);
 
             res.cookie('accessToken', accessToken, {
-                maxAge: 5 * 60 * 1000,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none'
-            }); // 5min
+            }); // temporarily 7days
 
             res.cookie('refreshToken', refreshToken, {
                 maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -84,7 +84,7 @@ class authController {
             res.status(200).json({
                 status: 'success',
                 message: 'Successfully logged in',
-                data: sanitizedUser
+                data: { user: sanitizedUser, accessToken, refreshToken }
             });
         } catch (error) {
             next(error);
@@ -131,8 +131,8 @@ class authController {
             const accessToken: string = jwt.sign(
                 payload,
                 process.env.JWT_SECRET as string,
-                { expiresIn: '5min' }
-            );
+                { expiresIn: '7d' }
+            ); // temporarily 7 days
 
             const refreshToken: string = jwt.sign(
                 payload,
@@ -157,11 +157,11 @@ class authController {
             ]);
 
             res.cookie('accessToken', accessToken, {
-                maxAge: 5 * 60 * 1000,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none'
-            }); // 5min
+            }); // temporarily 7 days
 
             res.cookie('refreshToken', refreshToken, {
                 maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -175,7 +175,7 @@ class authController {
             res.status(200).json({
                 status: 'success',
                 message: 'Successfully logged in',
-                data: sanitizedUser
+                data: { user: sanitizedUser, accessToken, refreshToken }
             });
         } catch (error) {
             next(error);
@@ -228,14 +228,14 @@ class authController {
             data: { refreshToken: newRefreshToken },
           });          
       
-          const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '5min' });
+          const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '7d' }); // temporarily 7 days
       
           res.cookie('accessToken', newAccessToken, {
-            maxAge: 5 * 60 * 1000,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true,
             secure: true,
             sameSite: 'none'
-          }); // 5 min
+          }); // temporarily 7 days
 
           res.cookie('refreshToken', newRefreshToken, {
             maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -245,7 +245,10 @@ class authController {
             sameSite: 'none'
           }); // 7d
       
-          res.status(200).end();
+          res.status(200).json({
+            status: 'success',
+            data: { accessToken: newAccessToken, refreshToken: newRefreshToken }
+          });
         } catch (error) {
           return next(error);
         }
