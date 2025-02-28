@@ -2,9 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { config } from 'dotenv';
+import https from 'https';
 import { PrismaClient } from '@prisma/client';
 import 'reflect-metadata';
 import router from './routes';
+import cache from './utils/cache';
 
 config();
 
@@ -51,5 +53,18 @@ async function startServer() {
 		process.exit(1);
 	}
 }
+
+// to keep render and redis alive
+setInterval(async () => {
+    if (serverURL) {
+        https.get(`${serverURL}/api/v1/ping`).on('error', (error) => {
+            console.error('Error pinging server:', error);
+        });
+    }
+
+    if (cache.connected) {
+        await cache.client.set('keep-alive-key', 'keep-alive-value', { EX: 15 * 60 });
+    }
+},  15 * 60 * 1000); // 15 minutes
 
 startServer();

@@ -17,6 +17,9 @@ router.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 router.get("/", (req: Request, res: Response) => {
     res.redirect("/api/v1/docs");
 });
+router.use('/api/v1/ping', (req: Request, res: Response) => {
+    res.status(200).end();
+});
 
 router.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
     handleError(err, res);
@@ -28,9 +31,5 @@ router.all('*', (req: Request, res: Response, next: NextFunction) => {
         message: `Cannot ${req.method} ${req.originalUrl}`
     });
 });
-
-// router.use('/api/v1/ping', (req: Request, res: Response) => {
-//     return res.status(200).end();
-// });
 
 export default router;
