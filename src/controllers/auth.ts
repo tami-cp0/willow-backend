@@ -84,7 +84,7 @@ class authController {
             res.status(200).json({
                 status: 'success',
                 message: 'Successfully logged in',
-                data: sanitizedUser
+                data: { user: sanitizedUser, accessToken, refreshToken }
             });
         } catch (error) {
             next(error);
@@ -175,7 +175,7 @@ class authController {
             res.status(200).json({
                 status: 'success',
                 message: 'Successfully logged in',
-                data: sanitizedUser
+                data: { user: sanitizedUser, accessToken, refreshToken }
             });
         } catch (error) {
             next(error);
@@ -245,7 +245,10 @@ class authController {
             sameSite: 'none'
           }); // 7d
       
-          res.status(200).end();
+          res.status(200).json({
+            status: 'success',
+            data: { accessToken: newAccessToken, refreshToken: newRefreshToken }
+          });
         } catch (error) {
           return next(error);
         }
