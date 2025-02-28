@@ -14,7 +14,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: `${process.env.BACKEND_URL || "http://127.0.0.1:3000"}/api/v1`,
+        url: `${process.env.BACKEND_URL || "http://0.0.0.0:3000"}/api/v1`,
         description: "Local server",
       },
     ]

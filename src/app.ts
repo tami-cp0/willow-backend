@@ -57,8 +57,8 @@ async function startServer() {
 
 // to keep render and redis alive
 setInterval(async () => {
-    if (serverURL) {
-        https.get(`${serverURL}/api/v1/ping`).on('error', (error) => {
+    if (backendURL) {
+        https.get(`${backendURL}/api/v1/ping`).on('error', (error) => {
             console.error('Error pinging server:', error);
         });
     }
