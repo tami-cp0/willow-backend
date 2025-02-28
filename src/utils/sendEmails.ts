@@ -118,7 +118,7 @@ export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp
             }
         } else if (type === 'password_reset') {
             if (!resetToken) {
-                console.error('accessToken is required')
+                console.error('resetToken is required - password reset')
                 throw new ErrorHandler(500, 'Internal server error')
             }
 
