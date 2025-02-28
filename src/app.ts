@@ -14,12 +14,13 @@ const app = express();
 
 const port: number = Number(process.env.PORT) || 3000;
 const host: string = '0.0.0.0';
-const serverURL: string = process.env.BACKEND_URL as string;
+const backendURL: string = process.env.BACKEND_URL as string;
+const frontendURL: string = process.env.FRONTEND_URL as string;
 
 let prisma: PrismaClient = new PrismaClient();
 export default prisma;
 
-const allowedOrigins: string[] = [serverURL, `http://${host}:${port}`];
+const allowedOrigins: string[] = [backendURL, frontendURL, `http://${host}:${port}`];
 
 app.use(
 	cors({
