@@ -15,6 +15,9 @@ model Product {
   size                 Json?  // store json array or null  
   price                Float        
   approvalStatus       ApprovalStatus  @default(PENDING) @map("approval_status")
+  label                Json
+  object               Json
+  aiRating             String          @map("ai_rating")
   createdAt            DateTime        @default(now()) @map("created_at")
   updatedAt            DateTime        @updatedAt @map("updated_at")
 
