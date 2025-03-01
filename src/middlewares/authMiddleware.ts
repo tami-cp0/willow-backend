@@ -17,7 +17,8 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     try {
         const decoded: CustomJwtPayload = jwt.verify(accessToken, secret) as CustomJwtPayload;
 
-        if (await cache.isAccessTokenBlacklisted(decoded._id, accessToken)) {
+        // reset token misuse detection
+        if ((await cache.isAccessTokenBlacklisted(decoded._id, accessToken)) || decoded.reset) {
             return next(new ErrorHandler(401, "Login required"));
         }
 
