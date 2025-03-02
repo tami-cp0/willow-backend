@@ -2,10 +2,9 @@ enum CustomerOrderItemStatus {
   PENDING
   ORDERED
   SHIPPED
-  DELIVERED
   RETURNED
   REFUNDED
-  CANCELLED
+  DELIVERED
 }
 
 enum SellerOrderItemStatus {
@@ -26,11 +25,11 @@ model OrderItem {
   seller              Seller                  @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
   sellerId            String                  @map("seller_id")
   
-  customerStatus      CustomerOrderItemStatus @default(ORDERED) @map("customer_status")
-  sellerStatus        SellerOrderItemStatus   @default(PROCESSING) @map("seller_status")
+  customerStatus      CustomerOrderItemStatus @default(PENDING) @map("customer_status")
+  sellerStatus        SellerOrderItemStatus   @default(NEW) @map("seller_status")
 
-  customerCancelMessage String?
-  sellerCancelMessage String?
+  customerReturnMessage String?    @map("customer_return_message")
+  sellerCancelMessage String?       @map("seller_cancel_message")
   
   quantity            Int
   price               Float
