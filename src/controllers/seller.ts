@@ -6,6 +6,7 @@ import validateGetOrdersDto from "../dtos/seller/getOrders.dto";
 import validateGetOrderDto from "../dtos/seller/getOrder.dto";
 import validateUpdateOrderStatusDto from "../dtos/seller/updateOrderStatus.dto";
 import { SellerStatus } from "@prisma/client";
+import validateGetProductsDto from "../dtos/seller/getProducts.dto";
 
 class sellerController {
     static async getSeller(req: Request, res: Response, next: NextFunction) {
@@ -79,8 +80,8 @@ class sellerController {
           await validateGetOrdersDto(req);
       
           const status = req.query.status as string;
-          const page = parseInt(req.query.page as string) || 1;
-          const limit = parseInt(req.query.limit as string) || 10;
+          const page = Number(req.query.page as string) || 1;
+          const limit = Number(req.query.limit as string) || 20;
           const skip = (page - 1) * limit;
       
           const where: Record<string, any> = { sellerId: req.user.id };
@@ -163,6 +164,44 @@ class sellerController {
           res.status(200).json({
             status: 'success',
             data: orderItem,
+          });
+        } catch (error) {
+          next(error);
+        }
+    }
+
+    static async getProducts(req: Request, res: Response, next: NextFunction) {
+        try {
+          await validateGetProductsDto(req);
+      
+          const page = Number(req.query.page as string) || 1;
+          const limit = Number(req.query.limit as string) || 10;
+          const skip = (page - 1) * limit;
+          const status = req.query.status as string;
+      
+          const where: Record<string, any> = { sellerId: req.params.userId };
+          if (status) {
+            where.approvalStatus = status;
+          }
+      
+          const [products, total] = await prisma.$transaction([
+            prisma.product.findMany({
+              where,
+              skip,
+              take: limit,
+            }),
+            prisma.product.count({ where }),
+          ]);
+      
+          res.status(200).json({
+            status: 'success',
+            data: products,
+            pagination: {
+              total,
+              page,
+              limit,
+              totalPages: Math.ceil(total / limit),
+            },
           });
         } catch (error) {
           next(error);
