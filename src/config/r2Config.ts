@@ -22,8 +22,8 @@ export const r2Client = new S3Client({
   },
 });
 
-export type ValidBuckets = 'avatars';
-export const validBuckets: ValidBuckets[] = ['avatars'];
+export type ValidBuckets = 'avatars' | 'products' | 'messagemedia';
+export const validBuckets: ValidBuckets[] = ['avatars', 'products', 'messagemedia'];
 
 // Associated functions
 
