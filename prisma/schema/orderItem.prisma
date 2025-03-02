@@ -29,7 +29,9 @@ model OrderItem {
   sellerStatus        SellerOrderItemStatus   @default(NEW) @map("seller_status")
 
   customerReturnMessage String?    @map("customer_return_message")
-  sellerCancelMessage String?       @map("seller_cancel_message")
+
+  // the reason for cancelling an order
+  sellerCancelMessage String?       @map("seller_cancel_message") @db.VarBit(255)
   
   quantity            Int
   price               Float
