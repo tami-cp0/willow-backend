@@ -8,7 +8,7 @@ model Seller {
   userId      String   @id @map("user_id")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  avatar      String?
+  avatar      Json?    // storing multer-s3 processed request
   businessName    String   @unique @db.VarChar(20) @map("business_name")
   bio         String?   @db.VarChar(255)
   status      SellerStatus @default(PENDING)
