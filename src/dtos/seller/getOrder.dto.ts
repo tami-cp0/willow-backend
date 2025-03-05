@@ -17,13 +17,14 @@ class GetOrderDto {
 async function validateGetOrderDto(req: Request): Promise<void> {
   const dtoInstance = plainToInstance(GetOrderDto, req.params);
   const errors = await validate(dtoInstance);
-  if (errors.length > 0) {
-    const firstErrorMessage = Object.values(errors[0].constraints || {})[0];
-    throw new ErrorHandler(400, firstErrorMessage);
-  }
 
   if (req.user.id !== req.params.userId) {
     throw new ErrorHandler(403, 'Access denied');
+  }
+  
+  if (errors.length > 0) {
+    const firstErrorMessage = Object.values(errors[0].constraints || {})[0];
+    throw new ErrorHandler(400, firstErrorMessage);
   }
 }
 

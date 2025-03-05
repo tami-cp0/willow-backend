@@ -27,12 +27,12 @@ async function validateUpdateSellerDto(req: Request): Promise<void> {
     });
   const { businessName, bio } = dtoInstance;
 
-  if (!req.file && !businessName && !bio) {
-    throw new ErrorHandler(400, 'At least one field (avatar, businessName, or bio) must be provided');
-  }
-
   if (req.user.id !== req.params.userId) {
     throw new ErrorHandler(403, 'Access denied');
+  }
+
+  if (!req.file && !businessName && !bio) {
+    throw new ErrorHandler(400, 'At least one field (avatar, businessName, or bio) must be provided');
   }
 
   const errors = await validate(dtoInstance);
