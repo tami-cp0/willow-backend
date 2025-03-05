@@ -21,11 +21,22 @@ const s3Storage = multerS3({
 });
 
 function fileFilter(req: any, file: Express.Multer.File, cb: (error: any, acceptFile?: boolean) => void) {
-  if (!file.mimetype.startsWith("image/")) {
-    return cb(new ErrorHandler(400, "Only images are allowed"));
+  if (file.fieldname === 'certificate' && !file.mimetype.startsWith("video/")) {
+    cb(null, true);
   }
 
-  cb(null, true);
+  if (file.fieldname === 'images') {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new ErrorHandler(400, "Only images are allowed for product images"));
+    }
+    return cb(null, true);
+  }
+  // Reject files from unexpected fields
+  return cb(new ErrorHandler(400, "Unexpected field"));
 };
 
-export const upload = multer({ storage: s3Storage, fileFilter });
+export const upload = multer({
+  storage: s3Storage,
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
