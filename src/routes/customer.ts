@@ -30,7 +30,8 @@
 
 // customerRouter.route('/customers/:userId/ai-conversation').get();
 
-
-
+// productRouter.route('/products/:productId/reviews').post();
+// productRouter.route('/products/:productId/reviews/:reviewId').patch();
+// productRouter.route('/products/:productId/reviews/:reviewId').delete();
 
 // export default customerRouter;
