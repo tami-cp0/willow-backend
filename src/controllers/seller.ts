@@ -10,6 +10,8 @@ import validateCreateProductDto from '../dtos/seller/createProduct.dto';
 import generateProductEmbedding from '../utils/dataEmbedding';
 import { ApprovalStatus, Prisma } from '@prisma/client';
 import vetProduct from '../utils/vetProduct';
+import validateGetProductDto from '../dtos/seller/getProduct.dto';
+import validateDeleteProductDto from '../dtos/seller/deleteProductDto';
 
 class sellerController {
 	static async getSeller(req: Request, res: Response, next: NextFunction) {
@@ -201,6 +203,7 @@ class sellerController {
 					where,
 					skip,
 					take: limit,
+					include: { reviews: true }
 				}),
 				prisma.product.count({ where }),
 			]);
@@ -363,6 +366,61 @@ class sellerController {
 			}
 		} catch (error) {
 			next(error);
+		}
+	}
+
+	static async getProduct(req: Request, res: Response, next: NextFunction) {
+		try {
+		  await validateGetProductDto(req);
+		  
+		  const { productId } = req.params;
+		  
+		  const product = await prisma.product.findUnique({
+			where: {
+			  id: productId,
+			},
+			include: {
+				reviews: true
+			}
+		  });
+	
+		  if (!product) {
+			throw new ErrorHandler(404, 'Product not found');
+		  }
+	
+		  res.status(200).json({
+			status: 'success',
+			data: product,
+		  });
+		} catch (error) {
+		  next(error);
+		}
+	  }
+
+	  static async deleteProduct(req: Request, res: Response, next: NextFunction) {
+		try {
+		  await validateDeleteProductDto(req);
+
+		  const { userId, productId } = req.params;
+	
+		  const product = await prisma.product.findFirst({
+			where: {
+			  id: productId,
+			  sellerId: userId,
+			},
+		  });
+		  
+		  if (!product) {
+			throw new ErrorHandler(404, 'Product not found');
+		  }
+	
+		  await prisma.product.delete({
+			where: { id: productId },
+		  });
+	
+		  res.status(204).end();
+		} catch (error) {
+		  next(error);
 		}
 	}
 }
