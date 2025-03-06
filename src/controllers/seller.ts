@@ -32,11 +32,7 @@ class sellerController {
 							reviews: true,
 						},
 					},
-					conversations: {
-						include: {
-							messages: true,
-						},
-					},
+					conversations: true
 				},
 			});
 
@@ -104,6 +100,7 @@ class sellerController {
 					where,
 					skip,
 					take: limit,
+					include: { product: true }
 				}),
 				prisma.orderItem.count({ where }),
 			]);
@@ -189,7 +186,7 @@ class sellerController {
 			await validateGetProductsDto(req);
 
 			const page = Number(req.query.page as string) || 1;
-			const limit = Number(req.query.limit as string) || 10;
+			const limit = Number(req.query.limit as string) || 20;
 			const skip = (page - 1) * limit;
 			const status = req.query.status as string;
 
@@ -203,7 +200,7 @@ class sellerController {
 					where,
 					skip,
 					take: limit,
-					include: { reviews: true }
+					include: { reviews: true, seller: true }
 				}),
 				prisma.product.count({ where }),
 			]);
@@ -380,7 +377,8 @@ class sellerController {
 			  id: productId,
 			},
 			include: {
-				reviews: true
+				reviews: true,
+				seller: true
 			}
 		  });
 	
