@@ -21,13 +21,17 @@ const s3Storage = multerS3({
 });
 
 function fileFilter(req: any, file: Express.Multer.File, cb: (error: any, acceptFile?: boolean) => void) {
+  if (file.fieldname === 'avatar' && !file.mimetype.startsWith("image/")) {
+    return cb(new ErrorHandler(400, "Only images are allowed"));
+  }
+
   if (file.fieldname === 'certificate' && !file.mimetype.startsWith("video/")) {
     cb(null, true);
   }
 
   if (file.fieldname === 'images') {
     if (!file.mimetype.startsWith("image/")) {
-      return cb(new ErrorHandler(400, "Only images are allowed for product images"));
+      return cb(new ErrorHandler(400, "Only images are allowed"));
     }
     return cb(null, true);
   }
