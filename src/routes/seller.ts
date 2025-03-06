@@ -8,7 +8,7 @@ const sellerRouter = Router();
 
 
 sellerRouter.route('/sellers/:userId').get(minimalRateLimiter, authMiddleware, sellerController.getSeller);
-sellerRouter.route('/sellers/:userId/update-profile').patch(moderateRateLimiter, authMiddleware, upload.single('file'), sellerController.updateProfile);
+sellerRouter.route('/sellers/:userId/update-profile').patch(moderateRateLimiter, authMiddleware, upload.single('avatar'), sellerController.updateProfile);
 
 sellerRouter.route('/sellers/:userId/orders').get(minimalRateLimiter, authMiddleware, sellerController.getOrders); // pagination; optional queries NEW, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED
 sellerRouter.route('/sellers/:userId/orders/:orderId').get(minimalRateLimiter, authMiddleware, sellerController.getOrder);
