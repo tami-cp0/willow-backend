@@ -15,3 +15,7 @@ Tokens per Minute (TPM): 1,000,000
 RE
 
 site logo for email
+
+Using a pre-trained CNN like ResNet for custom image classification.e
+
+leven labs, audible
