@@ -7,7 +7,7 @@ model Message {
 //   receiver        User       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
   receiverId      String     @map("receiver_id")
   content         String
-  images          String[]
+  images          Json?
   isReported      Boolean    @default(false)
   createdAt       DateTime   @default(now()) @map("created_at")
 
