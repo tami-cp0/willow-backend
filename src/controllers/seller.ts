@@ -11,7 +11,19 @@ import generateProductEmbedding from '../utils/dataEmbedding';
 import { ApprovalStatus, Prisma } from '@prisma/client';
 import vetProduct from '../utils/vetProduct';
 import validateGetProductDto from '../dtos/seller/getProduct.dto';
-import validateDeleteProductDto from '../dtos/seller/deleteProductDto';
+import validateDeleteProductDto from '../dtos/seller/deleteProduct.dto';
+import validateGetConversationsDto from '../dtos/seller/getConversations.dto';
+import validateGetConversationDto from '../dtos/seller/getConversation.dto';
+import { getSignedUrlForFile } from '../config/r2Config';
+import validateGetConversationMessagesDto from '../dtos/seller/getConversationMessages.dto';
+
+type Image = {
+	key: string,
+	url: string,
+	size: number,
+	mimetype: string,
+	originalname: string,
+}
 
 class sellerController {
 	static async getSeller(req: Request, res: Response, next: NextFunction) {
@@ -40,6 +52,10 @@ class sellerController {
 				return next(new ErrorHandler(404, 'Seller not found'));
 			}
 
+			let avatar = user.avatar as Image;
+			avatar.url = await getSignedUrlForFile('avatars', avatar.key, 604800); // 7 days
+			user.avatar = avatar;
+
 			res.status(200).json({
 				status: 'success',
 				data: user,
@@ -57,7 +73,17 @@ class sellerController {
 		try {
 			await validateUpdateSellerDto(req);
 
-			const avatar = req.file ? JSON.stringify(req.file) : undefined;
+			const file = req.file as Express.MulterS3.File;
+			let avatar;
+			if (req.file) {
+				avatar = {
+					key: file.key,
+					url: file.location,
+					size: file.size,
+					mimetype: file.mimetype,
+					originalname: file.originalname,
+				}
+			}
 
 			const { businessName, bio } = req.body;
 
@@ -417,6 +443,109 @@ class sellerController {
 		  });
 	
 		  res.status(204).end();
+		} catch (error) {
+		  next(error);
+		}
+	}
+
+	static async getConversations(req: Request, res: Response, next: NextFunction) {
+		try {
+		  await validateGetConversationsDto(req);
+		  const { userId } = req.params;
+		  
+		  const conversations = await prisma.conversation.findMany({
+			where: { sellerId: userId },
+			include: {
+			  customer: true,
+			  seller: true,
+			  messages: {
+				orderBy: { createdAt: 'desc' },
+				take: 1
+			  },
+			},
+			orderBy: { updatedAt: 'desc' }
+		  });
+		  
+		  res.status(200).json({
+			status: 'success',
+			data: conversations,
+		  });
+		} catch (error) {
+		  next(error);
+		}
+	}
+
+	static async getConversation(req: Request, res: Response, next: NextFunction) {
+		try {
+		  await validateGetConversationDto(req);
+		  const { conversationId, userId } = req.params;
+		  
+		  const conversation = await prisma.conversation.findFirst({
+			where: {
+			  id: conversationId,
+			  sellerId: userId,
+			},
+			include: {
+			  customer: true,
+			  seller: true,
+			  messages: {
+				orderBy: { createdAt: 'asc' },
+			  },
+			},
+		  });
+		  
+		  if (!conversation) {
+			throw new ErrorHandler(404, 'Conversation not found');
+		  }
+		  
+		  res.status(200).json({
+			status: 'success',
+			data: conversation,
+		  });
+		} catch (error) {
+		  next(error);
+		}
+	}
+
+	static async getConversationMessages(req: Request, res: Response, next: NextFunction) {
+		try {
+		  await validateGetConversationMessagesDto(req);
+		  const { conversationId, userId } = req.params;
+		  
+		  const conversation = await prisma.conversation.findFirst({
+			where: {
+			  id: conversationId,
+			  sellerId: userId,
+			},
+		  });
+		  
+		  if (!conversation) {
+			throw new ErrorHandler(404, 'Conversation not found');
+		  }
+		  
+		  // Retrieve messages for the conversation, ordered by creation time.
+		  let messages = await prisma.message.findMany({
+			where: { conversationId },
+			orderBy: { createdAt: 'asc' },
+		  });
+
+		  // add p-limit later to limit concurrency - npm install p-limit.
+		  messages = await Promise.all(
+			messages.map(async (message) => {
+			  const images = message.images as Image[];
+			  await Promise.all(
+				images.map(async (image) => {
+				  image.url = await getSignedUrlForFile('messagemedia', image.key, 1);
+				})
+			  );
+			  return message;
+			})
+		  );	
+
+		  res.status(200).json({
+			status: 'success',
+			data: messages,
+		  });
 		} catch (error) {
 		  next(error);
 		}
