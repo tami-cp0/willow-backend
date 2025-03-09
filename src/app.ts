@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import { config } from 'dotenv';
 import https from 'https';
 import { PrismaClient } from '@prisma/client';
+import expressWs from 'express-ws';
 import 'reflect-metadata';
 import router from './routes';
 import cache from './utils/cache';
@@ -11,6 +12,7 @@ import cache from './utils/cache';
 config();
 
 const app = express();
+export const wsInstance = expressWs(app, undefined, { leaveRouterUntouched: true });
 
 const port: number = Number(process.env.PORT) || 3000;
 const host: string = '0.0.0.0';
