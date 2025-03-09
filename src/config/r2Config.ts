@@ -27,16 +27,17 @@ export const validBuckets: ValidBuckets[] = ['avatars', 'products', 'messagemedi
 
 // Associated functions
 
-// /**
-//  * Generates a signed URL for accessing a file in the specified bucket.
-//  * @param {ValidBuckets} bucket - The name of the bucket.
-//  * @param {string} key - The file's key in the bucket.
-//  * @returns {Promise<string>} - A signed URL valid for 24 hours.
-//  */
-// export async function getSignedUrlForFile(bucket: ValidBuckets, key: string): Promise<string> {
-//   const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-//   return await getSignedUrl(r2Client, command, { expiresIn: 86400 });
-// }
+/**
+ * Generates a signed URL for accessing a file in the specified bucket.
+ * @param {ValidBuckets} bucket - The name of the bucket.
+ * @param {string} key - The file's key in the bucket.
+ * @param {number} expiresIn - Specified expiresIn time
+ * @returns {Promise<string>} - A signed URL.
+ */
+export async function getSignedUrlForFile(bucket: ValidBuckets, key: string, expiresIn: number): Promise<string> {
+  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+  return await getSignedUrl(r2Client, command, { expiresIn });
+}
 
 /**
  * Deletes an object from the specified bucket.
