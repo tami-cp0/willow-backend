@@ -1,33 +1,42 @@
 /**
  * @openapi
- * /products:
+ * /sellers/{userId}/products:
  *   get:
- *     summary: Get all products - paginated
+ *     summary: Get seller's products - paginated
  *     description: >
- *       Retrieves a paginated list of products with optional filtering by approval status.
- *       Each product includes details such as its name, description, images, stock,
- *       pricing, approval status, associated seller information, and reviews.
+ *       Retrieves a paginated list of products offered by the specified seller.
+ *       Optional query parameters can filter products by approval status (PENDING, APPROVED, REJECTED).
+ *       This endpoint requires cookie-based authentication.
  *     tags:
- *       - Products
+ *       - Sellers
  *     security:
  *       - cookieAuth: []
  *     parameters:
- *       - in: query
- *         name: page
+ *       - in: path
+ *         name: userId
+ *         required: true
  *         schema:
  *           type: string
- *         description: The page number for pagination (default is "1").
- *       - in: query
- *         name: limit
- *         schema:
- *           type: string
- *         description: The number of products per page (default is "20").
+ *         description: The seller's user ID (must match the authenticated user).
  *       - in: query
  *         name: status
+ *         required: false
  *         schema:
  *           type: string
  *           enum: [PENDING, APPROVED, REJECTED]
- *         description: Filter products by approval status.
+ *         description: Optional filter for product approval status.
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Page number for pagination (default is "1").
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Number of products per page (default is "20").
  *     responses:
  *       200:
  *         description: A list of products with pagination details.
@@ -46,7 +55,7 @@
  *                     properties:
  *                       id:
  *                         type: string
- *                         example: "01F0abcdef1234567890"
+ *                         example: "prod123"
  *                       name:
  *                         type: string
  *                         example: "Eco-Friendly Water Bottle"
@@ -55,7 +64,7 @@
  *                         example: "A sustainable water bottle made from recycled materials."
  *                       images:
  *                         type: object
- *                         description: "JSON object representing product images."
+ *                         description: JSON object representing product images.
  *                         example: { "thumbnail": "https://example.com/img1.jpg", "gallery": ["https://example.com/img2.jpg"] }
  *                       inStock:
  *                         type: integer
@@ -68,7 +77,7 @@
  *                         example: "Reusable Products"
  *                       options:
  *                         type: object
- *                         description: "Additional customizable options (e.g., color, size)."
+ *                         description: Additional options (e.g., color, size).
  *                         example: { "color": ["red", "blue"], "size": "M" }
  *                       price:
  *                         type: number
@@ -84,7 +93,7 @@
  *                         example: 0
  *                       reportMessages:
  *                         type: object
- *                         description: "JSON array of report messages."
+ *                         description: Array of report messages.
  *                         example: []
  *                       approvalStatus:
  *                         type: string
@@ -142,7 +151,7 @@
  *                               example: "review123"
  *                             productId:
  *                               type: string
- *                               example: "01F0abcdef1234567890"
+ *                               example: "prod123"
  *                             customerId:
  *                               type: string
  *                               example: "customer456"
@@ -183,6 +192,16 @@
  *                 message:
  *                   type: string
  *             examples:
+ *               missingUserId:
+ *                 summary: Missing seller user ID
+ *                 value:
+ *                   status: "fail"
+ *                   message: "Seller user ID is required"
+ *               invalidStatus:
+ *                 summary: Invalid status value
+ *                 value:
+ *                   status: "fail"
+ *                   message: "Invalid status"
  *               invalidPage:
  *                 summary: Invalid page parameter
  *                 value:
@@ -193,11 +212,6 @@
  *                 value:
  *                   status: "fail"
  *                   message: "Limit must be a string"
- *               invalidStatus:
- *                 summary: Invalid status parameter
- *                 value:
- *                   status: "fail"
- *                   message: "Invalid status"
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       429:
