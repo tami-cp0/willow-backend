@@ -4,30 +4,92 @@ enum ApprovalStatus {
   REJECTED
 }
 
+enum sourcing {
+  LOCALLY_SOURCED
+  INTERNATIONALLY_SOURCED
+}
+
+enum Packaging {
+  PLASTIC_FREE
+  BIODEGRADABLE
+  RECYCLED_PAPER
+  REUSABLE
+  COMPOSTABLE
+  MINIMAL
+  GLASS
+  METAL
+  PLASTIC
+  ECO_FRIENDLY_FOAMS
+  ALUMINUM
+  BAMBOO
+  CORRUGATED_CARDBOARD
+  PAPERBOARD
+}
+
+enum SustainabilityFeature {
+  BIODEGRADABLE
+  COMPOSTABLE
+  REUSABLE
+  RECYCLED_MATERIALS
+  LOCALLY_SOURCED
+  WATER_EFFICIENT
+  SOLAR_POWERED
+  MINIMAL_CARBON_FOOTPRINT
+  ENERGY_EFFICIENT
+  ZERO_WASTE
+  PLASTIC_FREE
+  REPAIRABLE_DESIGN
+  UPCYCLED
+  CARBON_OFFSET
+  ORGANIC_MATERIALS
+  FAIR_TRADE
+  VEGAN
+  NON_TOXIC // like BPA-free plastics or non-toxic dyes
+  REGENERATIVE_AGRICULTURE
+  SLOW_PRODUCTION
+  WASTE_REDUCING_DESIGN
+  CIRCULAR_DESIGN
+  WILDLIFE_FRIENDLY
+}
+
+
 model Product {
-  id                   String          @id @default(ulid()) @map("id")
-  name                 String          @db.VarChar(30)
-  description          String          @db.VarChar(255)
-  images               String[]        @default([])
-  quantity             Int             
-  category             String        
-  colors               Json?  // store json array or null
-  size                 Json?  // store json array or null  
-  price                Float        
-  approvalStatus       ApprovalStatus  @default(PENDING) @map("approval_status")
-  createdAt            DateTime        @default(now()) @map("created_at")
-  updatedAt            DateTime        @updatedAt @map("updated_at")
-
-  embedding            Unsupported("vector(768)")?
-
-  sellerId             String          @map("seller_id")
-  seller               Seller            @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
-  reviews              Review[]
-  orderItems           OrderItem[]
-  recommendations      Recommendation[]
-  lastViewed           LastViewed[]
-  likedProducts        LikedProduct[]
-  cartItems            CartItem[]
+  id                        String                 @id @default(ulid()) @map("id")
+  name                      String                 @db.VarChar(50)
+  description               String                 @db.VarChar(255)
+  images                    Json               
+  inStock                   Int?                   @map("in_stock") 
+  onDemand                  Boolean                @default(false) @map("on_demand")
+  category                  String                 
+  options                   Json?                   // Flexible options (e.g., size, color)
+  price                     Float                  
+  soldOut                   Boolean                @default(false) @map("sold_out")
+  isReported                Boolean                @default(false) @map("is_reported")
+  reportCount               Int                    @default(0) @map("report_count")// 10 strikes and you will be de-listed
+  reportMessages            Json?                  // json array of messages
+  approvalStatus            ApprovalStatus         @default(PENDING) @map("approval_status")
+  sustainabilityFeatures    SustainabilityFeature[]  @default([])
+  packaging                 Packaging            
+  createdAt                 DateTime               @default(now()) @map("created_at")
+  updatedAt                 DateTime               @updatedAt @map("updated_at")
+  embedding                 Unsupported("vector(768)")?
+  
+  // environmental insights:
+  endOfLifeInfo             String?                @map("end_of_life_info")      // Disposal/recycling instructions
+  sourcing                 sourcing                // Where the product is manufactured local or international
+  sustainabilityScore      String?                @map("sustainability_score")
+  sustainabilityScoreReason      String?                @map("sustainability_score_reason")
+  sustainabilityTag         String?                @map("sustainability_tag")    // Quick visual tag (e.g., "Low Energy", "Zero Waste")
+  certification             Json?                  // { certified by & certificate document}
+  
+  sellerId                  String                 @map("seller_id")
+  seller                    Seller                 @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
+  reviews                   Review[]
+  orderItems                OrderItem[]
+  recommendations           Recommendation[]
+  lastViewed                LastViewed[]
+  likedProducts             LikedProduct[]
+  cartItems                 CartItem[]
 
   @@map("products")
 }

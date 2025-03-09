@@ -1,4 +1,5 @@
 import { Response } from "express";
+import multer from "multer";
 
 export interface CustomError extends Error {
     statusCode: number;
@@ -27,6 +28,13 @@ export const handleError = (error: CustomError, response: Response) => {
     let message = error.message || "Internal Server Error";
 
     console.error(error); // removed for prod
+
+    if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            message = "File size exceeds 10MB limit";
+            statusCode = 400;
+        }
+    }
     
     const errorResponsePayload: any = { status: "fail", message };
     

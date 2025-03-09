@@ -4,9 +4,11 @@ import cookieParser from 'cookie-parser';
 import { config } from 'dotenv';
 import https from 'https';
 import { PrismaClient } from '@prisma/client';
+import expressWs from 'express-ws';
 import 'reflect-metadata';
 import router from './routes';
 import cache from './utils/cache';
+import createChatRouter from './routes/chat';
 
 config();
 
@@ -36,6 +38,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(router);
+
+// avoiding circular depepndecies and gloal vairbales
+const wsInstance = expressWs(app, undefined, { leaveRouterUntouched: true });
+const chatRouter = createChatRouter(wsInstance);
+app.use('/api/v1/chat', chatRouter);
 
 const GREEN = '\x1b[32m%s\x1b[0m';
 const RED = '\x1b[31m%s\x1b[0m';

@@ -5,19 +5,31 @@ CREATE EXTENSION IF NOT EXISTS "vector" WITH SCHEMA "public";
 CREATE TYPE "AIChatStatus" AS ENUM ('OPEN', 'CLOSED');
 
 -- CreateEnum
-CREATE TYPE "OrderItemStatus" AS ENUM ('PENDING', 'ORDERED', 'SHIPPED', 'DELIVERED', 'RETURNED', 'CANCELLED');
+CREATE TYPE "ticketStatus" AS ENUM ('PENDING', 'RESOLVED');
 
 -- CreateEnum
-CREATE TYPE "ticketStatus" AS ENUM ('PENDING', 'RESOLVED');
+CREATE TYPE "CustomerOrderItemStatus" AS ENUM ('PENDING', 'ORDERED', 'SHIPPED', 'RETURNED', 'REFUNDED', 'DELIVERED');
+
+-- CreateEnum
+CREATE TYPE "SellerOrderItemStatus" AS ENUM ('NEW', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED');
 
 -- CreateEnum
 CREATE TYPE "ApprovalStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
 -- CreateEnum
-CREATE TYPE "saleStatus" AS ENUM ('REVERSED', 'FULFILLED');
+CREATE TYPE "sourcing" AS ENUM ('LOCALLY_SOURCED', 'INTERNATIONALLY_SOURCED');
 
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('CUSTOMER', 'SELLER', 'ADMIN', 'GUEST');
+CREATE TYPE "Packaging" AS ENUM ('PLASTIC_FREE', 'BIODEGRADABLE', 'RECYCLED_PAPER', 'REUSABLE', 'COMPOSTABLE', 'MINIMAL', 'GLASS', 'METAL', 'PLASTIC', 'ECO_FRIENDLY_FOAMS', 'ALUMINUM', 'BAMBOO', 'CORRUGATED_CARDBOARD', 'PAPERBOARD');
+
+-- CreateEnum
+CREATE TYPE "SustainabilityFeature" AS ENUM ('BIODEGRADABLE', 'COMPOSTABLE', 'REUSABLE', 'RECYCLED_MATERIALS', 'LOCALLY_SOURCED', 'WATER_EFFICIENT', 'SOLAR_POWERED', 'MINIMAL_CARBON_FOOTPRINT', 'ENERGY_EFFICIENT', 'ZERO_WASTE', 'PLASTIC_FREE', 'REPAIRABLE_DESIGN', 'UPCYCLED', 'CARBON_OFFSET', 'ORGANIC_MATERIALS', 'FAIR_TRADE', 'VEGAN', 'NON_TOXIC', 'REGENERATIVE_AGRICULTURE', 'SLOW_PRODUCTION', 'WASTE_REDUCING_DESIGN', 'CIRCULAR_DESIGN', 'WILDLIFE_FRIENDLY');
+
+-- CreateEnum
+CREATE TYPE "SellerStatus" AS ENUM ('PENDING', 'APPROVED', 'FAILED');
+
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('CUSTOMER', 'SELLER', 'ADMIN');
 
 -- CreateEnum
 CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'SUSPENDED');
@@ -93,7 +105,7 @@ CREATE TABLE "customers" (
     "user_id" TEXT NOT NULL,
     "firstname" VARCHAR(20) NOT NULL,
     "lastname" VARCHAR(20) NOT NULL,
-    "address" JSONB NOT NULL,
+    "address" JSONB,
     "points" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "customers_pkey" PRIMARY KEY ("user_id")
@@ -123,18 +135,6 @@ CREATE TABLE "orders" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "orders_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "order_items" (
-    "id" TEXT NOT NULL,
-    "order_id" TEXT NOT NULL,
-    "product_id" TEXT NOT NULL,
-    "status" "OrderItemStatus" NOT NULL DEFAULT 'PENDING',
-    "quantity" INTEGER NOT NULL,
-    "price" DOUBLE PRECISION NOT NULL,
-
-    CONSTRAINT "order_items_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -210,6 +210,7 @@ CREATE TABLE "messages" (
     "sender_id" TEXT NOT NULL,
     "receiver_id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
+    "images" JSONB,
     "isReported" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -217,42 +218,60 @@ CREATE TABLE "messages" (
 );
 
 -- CreateTable
+CREATE TABLE "order_items" (
+    "id" TEXT NOT NULL,
+    "order_id" TEXT NOT NULL,
+    "product_id" TEXT NOT NULL,
+    "seller_id" TEXT NOT NULL,
+    "customer_status" "CustomerOrderItemStatus" NOT NULL DEFAULT 'PENDING',
+    "seller_status" "SellerOrderItemStatus" NOT NULL DEFAULT 'NEW',
+    "customer_return_message" TEXT,
+    "seller_cancel_message" VARBIT(255),
+    "quantity" INTEGER NOT NULL,
+    "price" DOUBLE PRECISION NOT NULL,
+
+    CONSTRAINT "order_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "products" (
     "id" TEXT NOT NULL,
-    "name" VARCHAR(30) NOT NULL,
+    "name" VARCHAR(50) NOT NULL,
     "description" VARCHAR(255) NOT NULL,
-    "images" TEXT[] DEFAULT ARRAY[]::TEXT[],
-    "quantity" INTEGER NOT NULL,
+    "images" JSONB NOT NULL,
+    "in_stock" INTEGER,
+    "on_demand" BOOLEAN NOT NULL DEFAULT false,
     "category" TEXT NOT NULL,
-    "colors" JSONB,
-    "size" JSONB,
+    "options" JSONB,
     "price" DOUBLE PRECISION NOT NULL,
+    "sold_out" BOOLEAN NOT NULL DEFAULT false,
+    "is_reported" BOOLEAN NOT NULL DEFAULT false,
+    "report_count" INTEGER NOT NULL DEFAULT 0,
+    "reportMessages" JSONB,
     "approval_status" "ApprovalStatus" NOT NULL DEFAULT 'PENDING',
+    "sustainabilityFeatures" "SustainabilityFeature"[] DEFAULT ARRAY[]::"SustainabilityFeature"[],
+    "packaging" "Packaging" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "embedding" vector(768),
+    "end_of_life_info" TEXT,
+    "sourcing" "sourcing" NOT NULL,
+    "sustainability_score" TEXT,
+    "sustainability_score_reason" TEXT,
+    "sustainability_tag" TEXT,
+    "certification" JSONB,
     "seller_id" TEXT NOT NULL,
 
     CONSTRAINT "products_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "sales" (
-    "id" TEXT NOT NULL,
-    "seller_id" TEXT NOT NULL,
-    "order_id" TEXT NOT NULL,
-    "revenue" DOUBLE PRECISION NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "sales_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "sellers" (
     "user_id" TEXT NOT NULL,
-    "username" VARCHAR(20) NOT NULL,
-    "bio" VARCHAR(255) NOT NULL,
+    "avatar" JSONB,
+    "business_name" VARCHAR(20) NOT NULL,
+    "bio" VARCHAR(255),
+    "status" "SellerStatus" NOT NULL DEFAULT 'PENDING',
 
     CONSTRAINT "sellers_pkey" PRIMARY KEY ("user_id")
 );
@@ -262,11 +281,12 @@ CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT,
     "password" TEXT,
-    "role" "Role" NOT NULL DEFAULT 'GUEST',
+    "role" "Role" NOT NULL,
     "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
     "is_verified" BOOLEAN NOT NULL DEFAULT false,
     "last_logged_in" TIMESTAMP(3),
-    "refresh_tokens" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "last_known_ip" TEXT,
+    "refresh_token" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -313,6 +333,12 @@ CREATE UNIQUE INDEX "liked_products_customer_id_product_id_key" ON "liked_produc
 
 -- CreateIndex
 CREATE UNIQUE INDEX "recommendations_customer_id_product_id_key" ON "recommendations"("customer_id", "product_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "order_items_order_id_product_id_seller_id_key" ON "order_items"("order_id", "product_id", "seller_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sellers_business_name_key" ON "sellers"("business_name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
@@ -366,12 +392,6 @@ ALTER TABLE "liked_products" ADD CONSTRAINT "liked_products_product_id_fkey" FOR
 ALTER TABLE "orders" ADD CONSTRAINT "orders_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "order_items" ADD CONSTRAINT "order_items_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "recommendations" ADD CONSTRAINT "recommendations_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -402,10 +422,16 @@ ALTER TABLE "help_ticket_responses" ADD CONSTRAINT "help_ticket_responses_admin_
 ALTER TABLE "messages" ADD CONSTRAINT "messages_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "conversations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "products" ADD CONSTRAINT "products_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "sellers"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "sales" ADD CONSTRAINT "sales_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "sellers"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "order_items" ADD CONSTRAINT "order_items_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "order_items" ADD CONSTRAINT "order_items_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "sellers"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "products" ADD CONSTRAINT "products_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "sellers"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sellers" ADD CONSTRAINT "sellers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

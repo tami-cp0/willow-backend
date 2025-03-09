@@ -1,11 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from 'dotenv';
 import { Product } from "@prisma/client";
+import { instantiateModel } from '../config/aiConfig';
 
 config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
-const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+const model = instantiateModel('text-embedding-004');
 
 function formatProductForEmbedding(product: Product): string {
   return `
@@ -13,9 +13,10 @@ function formatProductForEmbedding(product: Product): string {
     Category: ${product.category}
     Description: ${product.description}
     Price: ${product.price}
-    QuantityLeft: ${product.quantity}
-    ${product.colors ? `ColorsAvailable: ${product.colors}` : ''}
-    ${product.size ? `SizesAvailable: ${product.size}` : ''}
+    Packaging: ${product.packaging}
+    sourcing: ${product.sourcing}
+    Sustainability Tag: ${product.sustainabilityTag}
+    ${product.onDemand ? 'onDemand: true' : `inStock: ${product.inStock}`}
   `.trim();
 }
 

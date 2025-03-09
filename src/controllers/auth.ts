@@ -296,8 +296,8 @@ class authController {
                 where: {
                     email: decoded.email
                 },
-                data: { password: await bcrypt.hash(newPassword, 10)}
-            })
+                data: { password: await bcrypt.hash(newPassword, 10), refreshToken: null }
+            });
 
 			res.status(200).json({
 				status: 'success',
