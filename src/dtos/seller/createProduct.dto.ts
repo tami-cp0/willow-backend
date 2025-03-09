@@ -50,10 +50,6 @@ class CreateProductDto {
   @IsNotEmpty({ message: 'Seller ID is required' })
   @IsString({ message: 'Seller ID must be a string' })
   userId!: string;
-
-  @IsOptional()
-  @IsString({ message: 'certifiedBy must be a string' })
-  certifiedBy?: string;
 }
 
 async function validateCreateProductDto(req: Request): Promise<void> {
