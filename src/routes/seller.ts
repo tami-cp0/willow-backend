@@ -19,12 +19,11 @@ sellerRouter.route('/sellers/:userId/products').post(strictRateLimiter, authMidd
     { name: 'certificate', maxCount: 1 },
     { name: 'images', maxCount: 5 }
   ]), sellerController.createProduct);
-sellerRouter.route('/sellers/:userId/products/productId').get(minimalRateLimiter, authMiddleware, sellerController.getProduct);
-sellerRouter.route('/sellers/:userId/products/productId').delete(moderateRateLimiter, authMiddleware, sellerController.deleteProduct);
+sellerRouter.route('/sellers/:userId/products/:productId').get(minimalRateLimiter, authMiddleware, sellerController.getProduct);
+sellerRouter.route('/sellers/:userId/products/:productId').delete(moderateRateLimiter, authMiddleware, sellerController.deleteProduct);
 
-sellerRouter.route('/sellers/:userId/conversations').get();
-sellerRouter.route('/sellers/:userId/conversations/conversationId').get();
-sellerRouter.route('/sellers/:userId/conversations/conversationId/messages').post();
-sellerRouter.route('/sellers/:userId/conversations/conversationId/messages').get();
+sellerRouter.route('/sellers/:userId/conversations').get(minimalRateLimiter, authMiddleware, sellerController.getConversations);
+sellerRouter.route('/sellers/:userId/conversations/:conversationId').get(minimalRateLimiter, authMiddleware, sellerController.getConversation);
+sellerRouter.route('/sellers/:userId/conversations/:conversationId/messages').get(moderateRateLimiter, authMiddleware, sellerController.getConversationMessages);
 
 export default sellerRouter;
