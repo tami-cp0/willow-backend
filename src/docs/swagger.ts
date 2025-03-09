@@ -5,7 +5,7 @@ const options: swaggerJsdoc.Options = {
     openapi: "3.0.0",
     info: {
       title: "Willow",
-      version: "1.0.0",
+      version: "1.1.23",
       description: 'API documentation',
       contact: {
         name: "Contact the Developer: linkedIn",
