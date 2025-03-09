@@ -6,6 +6,7 @@ import userRouter from "./user";
 import swaggerSpec from "../docs/swagger";
 import sellerrRouter from "./seller";
 import productRouter from "./product";
+import chatRouter from "./chat";
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.use('/api/v1/users', userRouter);
 // router.use('/api/v1/users', customerRouter);
 router.use('/api/v1/users', productRouter);
 router.use('/api/v1/users', sellerrRouter);
+router.use('/api/v1/chat', chatRouter);
 router.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 router.get("/", (req: Request, res: Response) => {
     res.redirect("/api/v1/docs");
