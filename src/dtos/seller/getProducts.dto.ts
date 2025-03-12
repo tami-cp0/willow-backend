@@ -19,7 +19,7 @@ class GetProductsDto {
 
   @IsOptional()
   @IsString({ message: 'Status must be a string' })
-  @IsIn(['PENDING', 'APPROVED', 'REJECTED'], { message: 'Invalid status' })
+  @IsIn(['PENDING', 'APPROVED', 'REJECTED', 'OUT_OF_STOCK'], { message: 'Invalid status' })
   status?: string;
 }
 

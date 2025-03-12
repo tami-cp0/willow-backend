@@ -8,7 +8,7 @@ import validateUpdateOrderStatusDto from '../dtos/seller/updateOrderStatus.dto';
 import validateGetProductsDto from '../dtos/seller/getProducts.dto';
 import validateCreateProductDto from '../dtos/seller/createProduct.dto';
 import generateProductEmbedding from '../utils/dataEmbedding';
-import { ApprovalStatus, Prisma } from '@prisma/client';
+import { ApprovalStatus, Prisma, Product } from '@prisma/client';
 import vetProduct from '../utils/vetProduct';
 import validateGetProductDto from '../dtos/seller/getProduct.dto';
 import validateDeleteProductDto from '../dtos/seller/deleteProduct.dto';
@@ -217,11 +217,12 @@ class sellerController {
 			const status = req.query.status as string;
 
 			const where: Record<string, any> = { sellerId: req.params.userId };
-			if (status) {
+
+			if (status && status !== 'OUT_OF_STOCK' ) {
 				where.approvalStatus = status;
 			}
 
-			const [products, total] = await prisma.$transaction([
+			let [products, total] = await prisma.$transaction([
 				prisma.product.findMany({
 					where,
 					skip,
@@ -230,6 +231,10 @@ class sellerController {
 				}),
 				prisma.product.count({ where }),
 			]);
+
+			if (status && status === 'OUT_OF_STOCK') {
+				products = products.filter((product: Product) => product.inStock === 0)
+			}
 
 			res.status(200).json({
 				status: 'success',
