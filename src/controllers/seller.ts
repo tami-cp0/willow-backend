@@ -336,16 +336,15 @@ class sellerController {
 				? explanationMatch[1].trim()
 				: null;
 
+			let message;
+			let approvalStatus: ApprovalStatus;
+
 			if (sustainabilityScoreReason === 'Inconclusive') {
-				res.status(200).json({
-					status: 'success',
-					message:
-						'Thank you for your submission. Based on our initial assessment, the available data was insufficient for a definitive sustainability evaluation. We invite you to apply for extended vetting, which provides an extended in-person review to help determine if your product meets our sustainability criteria for listing',
-				});
+				message = 'Thank you for your submission. Based on our initial assessment, the available data was insufficient for a definitive sustainability evaluation. We invite you to apply for extended vetting, which provides an extended in-person review to help determine if your product meets our sustainability criteria for listing'
 			} else {
-				let message =
+				message =
 					'Congratulations! Your product has met our sustainability criteria and has been approved for listing on our eco-friendly marketplace. Thank you for contributing to a more responsible and sustainable future.';
-				let approvalStatus: ApprovalStatus = 'APPROVED';
+				approvalStatus = 'APPROVED';
 				if (Number(sustainabilityScore) < 50) {
 					approvalStatus = 'REJECTED';
 					message =
@@ -380,13 +379,12 @@ class sellerController {
 					approvalStatus,
 					product.id
 				);
-
-				res.status(200).json({
-					status: 'success',
-					message,
-					data: product,
-				});
 			}
+			res.status(200).json({
+				status: 'success',
+				message,
+				data: product,
+			});
 		} catch (error) {
 			next(error);
 		}
