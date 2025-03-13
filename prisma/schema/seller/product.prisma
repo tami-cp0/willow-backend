@@ -56,7 +56,7 @@ enum SustainabilityFeature {
 model Product {
   id                        String                 @id @default(ulid()) @map("id")
   name                      String                 @db.VarChar(50)
-  description               String                 @db.VarChar(255)
+  description               String                 @db.VarChar(1000)
   images                    Json               
   inStock                   Int?                   @map("in_stock") 
   onDemand                  Boolean                @default(false) @map("on_demand")
