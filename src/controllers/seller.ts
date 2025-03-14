@@ -16,6 +16,7 @@ import validateGetConversationsDto from '../dtos/seller/getConversations.dto';
 import validateGetConversationDto from '../dtos/seller/getConversation.dto';
 import { getSignedUrlForFile } from '../config/r2Config';
 import validateGetConversationMessagesDto from '../dtos/seller/getConversationMessages.dto';
+import { sendEmail } from '../utils/sendEmails';
 
 type Image = {
 	key: string,
@@ -366,6 +367,14 @@ class sellerController {
 
 				const embedding = generateProductEmbedding(product);
 
+				let certificate;
+				if (certificate) {
+					certificate = true // for frontend
+					approvalStatus = 'PENDING';
+					message = "Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
+					sendEmail('certificate', req.user.email, '', '', product);
+				}
+
 				await prisma.$executeRawUnsafe(
 					`
 					UPDATE "products"
@@ -385,6 +394,7 @@ class sellerController {
 					product.id
 				);
 			}
+
 			res.status(200).json({
 				status: 'success',
 				message,
