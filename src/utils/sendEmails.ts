@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { config } from "dotenv";
 import cache from "./cache";
 import { ErrorHandler } from "./errorHandler";
+import { Product } from "@prisma/client";
 
 config();
 
@@ -81,13 +82,46 @@ const newLoginLocationEmailTemplate = ['New Login Location Detected', `
         </div>
     </body>
     </html>`]
+
+    const newProductSubmissionWithCertificateEmailTemplate = [
+        'New Product Submission with Certificate',
+        `
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>New Product Submission with Certificate</title>
+              <style>
+                  body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+                  .container { max-width: 600px; background: #fff; padding: 20px; margin: 0 auto; border-radius: 5px; }
+                  .details { background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+                  .footer { font-size: 12px; color: #777; text-align: center; margin-top: 20px; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h2>New Product Submission with Certificate</h2>
+                  <p>A new product submission has been received with an attached sustainability certificate.</p>
+                  <div class="details">
+                      <p><strong>Product id:</strong> <product_id></p>
+                      <p><strong>Seller Email:</strong> <seller_email></p>
+                      <p><strong>Submission Date:</strong> ${new Date()}</p>
+                  </div>
+                  <p>Please review the certificate for validation within the next <strong>24–48 hours</strong>.</p>
+                  <div class="footer">&copy; 2025 Willow</div>
+              </div>
+          </body>
+          </html>`
+      ];
+      
     
 
 const generateOTP = (length = 6): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp', email: string, ip?: string, resetToken?: string) {
+// temporarily add product parameter for temporary certificate email
+export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp' | 'certificate', email: string, ip?: string, resetToken?: string, product?: Product) {
     try {
         let html: string[] = otpEmailTemplate; // default
 
@@ -124,6 +158,12 @@ export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp
 
             html = passwordResetEmailTemplate;
             html[1] = html[1].replace('<reset_token>', resetToken);
+        } else if (type === 'certificate') {
+            html = newProductSubmissionWithCertificateEmailTemplate;
+            html[1] = html[1].replace('<product_id>', product!.id).replace('<seller_email>', email);
+
+            // temporarily send to my email
+            email = 'findtamilore@gmail.com';
         }
         const transporter = nodemailer.createTransport({
             service: 'gmail',
