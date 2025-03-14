@@ -12,7 +12,7 @@ class CreateProductDto {
 
   @IsNotEmpty({ message: 'Description is required' })
   @IsString({ message: 'Description must be a string' })
-  @Length(1, 255, { message: 'Description must be between 1 and 255 characters' })
+  @Length(1, 1000, { message: 'Description must be between 1 and 255 characters' })
   description!: string;
 
   @IsOptional()

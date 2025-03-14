@@ -80,7 +80,7 @@
  *                 example: products
  *               description:
  *                 type: string
- *                 description: Product description (1-255 characters).
+ *                 description: Product description (1-1000 characters).
  *                 example: "A sustainable water bottle made from recycled materials."
  *               inStock:
  *                 type: number
@@ -139,6 +139,7 @@
  *           The product was created successfully. Depending on the sustainability vetting result:
  *           - If inconclusive, a message is returned inviting the seller to apply for extended vetting.
  *           - Otherwise, the product data is returned with sustainability scores and approval status.
+ *           - If certificate is detected, approval status is automatically pending.
  *         content:
  *           application/json:
  *             schema:
@@ -148,6 +149,9 @@
  *                     status:
  *                       type: string
  *                       example: "success"
+ *                     certificate:
+ *                       type: boolean
+ *                       example: false
  *                     message:
  *                       type: string
  *                       example: "Thank you for your submission. Based on our initial assessment, the available data was insufficient for a definitive sustainability evaluation. We invite you to apply for extended vetting."
@@ -156,6 +160,9 @@
  *                     status:
  *                       type: string
  *                       example: "success"
+ *                     certificate:
+ *                       type: boolean
+ *                       example: false
  *                     message:
  *                       type: string
  *                       example: "Congratulations! Your product has met our sustainability criteria and has been approved for listing on our eco-friendly marketplace. Thank you for contributing to a more responsible and sustainable future."
