@@ -372,7 +372,7 @@ class sellerController {
 					certificate = true // for frontend
 					approvalStatus = 'PENDING';
 					message = "Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
-					sendEmail('certificate', req.user.email, '', '', product);
+					sendEmail('certificate', req.user.email as string, '', '', product);
 				}
 
 				await prisma.$executeRawUnsafe(
