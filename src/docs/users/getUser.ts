@@ -7,6 +7,8 @@
  *       Retrieves the details of the authenticated user plus customer/seller details which depends on what the user signed up as.
  *     tags:
  *       - Users
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: userId

@@ -9,8 +9,6 @@
  *       pricing, approval status, associated seller information, and reviews.
  *     tags:
  *       - Products
- *     security:
- *       - cookieAuth: []
  *     parameters:
  *       - in: query
  *         name: page
