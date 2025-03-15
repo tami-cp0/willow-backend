@@ -61,6 +61,12 @@
  *                       type: string
  *                       format: date-time
  *                       example: "2025-02-27T10:00:00Z"
+ *                     customer:
+ *                       type: string
+ *                       example: "{}"
+ *                     seller:
+ *                       type: string
+ *                       example: "{}"
  *       400:
  *         description: Bad request due to missing or invalid parameters.
  *         content:
