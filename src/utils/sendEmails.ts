@@ -182,6 +182,6 @@ export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp
             console.error('Failed to send email:', error);
         });   
     } catch (error) {
-        return error;
+        throw error;
     }
 }
