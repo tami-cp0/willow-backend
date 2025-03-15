@@ -27,6 +27,10 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
             user = await prisma.user.findUnique({
                 where: {
                     id: decoded.id
+                },
+                include: {
+                    customer: true,
+                    seller: true
                 }
             });
             if (!user) return next(new ErrorHandler(404, "Account does not exist: Invalid ID"));
