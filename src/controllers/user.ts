@@ -3,6 +3,7 @@ import prisma from "../app";
 import bcrypt from 'bcryptjs';
 import { sendEmail } from "../utils/sendEmails";
 import validateCreateUserDto from "../dtos/user/createUser.dto";
+import { ErrorHandler } from "../utils/errorHandler";
 
 class userController {
     static async register(req: Request, res: Response, next: NextFunction) {
@@ -65,6 +66,19 @@ class userController {
             res.status(204).end();
         } catch (error) {
             next(error);
+        }
+    }
+
+    static async getUser(req: Request, res: Response, next: NextFunction) {
+        try {
+          const user = req.user;
+    
+          res.status(200).json({
+            status: 'success',
+            data: user,
+          });
+        } catch (error) {
+          next(error);
         }
     }
 }
