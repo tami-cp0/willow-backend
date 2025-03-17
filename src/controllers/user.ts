@@ -3,7 +3,6 @@ import prisma from "../app";
 import bcrypt from 'bcryptjs';
 import { sendEmail } from "../utils/sendEmails";
 import validateCreateUserDto from "../dtos/user/createUser.dto";
-import { ErrorHandler } from "../utils/errorHandler";
 
 class userController {
     static async register(req: Request, res: Response, next: NextFunction) {
