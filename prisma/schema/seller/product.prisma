@@ -4,52 +4,61 @@ enum ApprovalStatus {
   REJECTED
 }
 
-enum sourcing {
-  LOCALLY_SOURCED
-  INTERNATIONALLY_SOURCED
+enum Sourcing {
+  LOCALLY_SOURCED           // "Locally Sourced" Materials or products obtained from nearby regions to reduce transportation emissions and support local economies
+  INTERNATIONALLY_SOURCED   // "Internationally Sourced" Materials or products obtained globally, potentially offering diverse options but with higher transport emissions
 }
 
 enum Packaging {
-  PLASTIC_FREE
-  BIODEGRADABLE
-  RECYCLED_PAPER
-  REUSABLE
-  COMPOSTABLE
-  MINIMAL
-  GLASS
-  METAL
-  PLASTIC
-  ECO_FRIENDLY_FOAMS
-  ALUMINUM
-  BAMBOO
-  CORRUGATED_CARDBOARD
-  PAPERBOARD
+  PLASTIC_FREE          // "Plastic-Free" Broad, encompassing no plastic
+  BIODEGRADABLE         // "Biodegradable Packaging" Clear and direct
+  RECYCLED_PAPER        // "Recycled Paper",Specific and understandable
+  RECYCLED_CARDBOARD    // "Recycled Cardboard", Separating cardboard for clarity
+  REUSABLE_PACKAGING    // "Reusable Packaging", Emphasizes reusability
+  COMPOSTABLE_PACKAGING // "Compostable Packaging", clear it's the *packaging* that is compostable
+  MINIMAL_PACKAGING     // "Minimal Packaging", Focus on reduction
+  GLASS_CONTAINER       // "Glass Container", Specific material and container type
+  METAL_CONTAINER       // "Metal Container", Specific material and container type
+  RECYCLED_PLASTIC      // "Recycled Plastic", Important distinction from regular plastic
+  PLASTIC_CONTAINER     // "Plastic Container", General plastic, if unavoidable
+  PAPERBOARD_BOX        // "Paperboard Box", More specific than just 'paper' or 'cardboard'
+  BAMBOO_PACKAGING      // "Bamboo Packaging", Specific eco-friendly material
+  ALUMINUM_CONTAINER    // "Aluminum Container", Specific metal container - often recyclable
+  OTHER_ECO_FRIENDLY    // "Other Eco-Friendly", Catch-all for less common but valid options
+  UNKNOWN_PACKAGING     // "Unknown Packaging", Important for sellers who are unsure or haven't specified
 }
 
 enum SustainabilityFeature {
-  BIODEGRADABLE
-  COMPOSTABLE
-  REUSABLE
-  RECYCLED_MATERIALS
-  LOCALLY_SOURCED
-  WATER_EFFICIENT
-  SOLAR_POWERED
-  MINIMAL_CARBON_FOOTPRINT
-  ENERGY_EFFICIENT
-  ZERO_WASTE
-  PLASTIC_FREE
-  REPAIRABLE_DESIGN
-  UPCYCLED
-  CARBON_OFFSET
-  ORGANIC_MATERIALS
-  FAIR_TRADE
-  VEGAN
-  NON_TOXIC // like BPA-free plastics or non-toxic dyes
-  REGENERATIVE_AGRICULTURE
-  SLOW_PRODUCTION
-  WASTE_REDUCING_DESIGN
-  CIRCULAR_DESIGN
-  WILDLIFE_FRIENDLY
+  BIODEGRADABLE              // "Biodegradable" Indicates materials that break down naturally without harming the environment
+  COMPOSTABLE                // "Compostable" Materials suitable for composting and enriching soil
+  REUSABLE                   // "Reusable" Products designed for repeated use to minimize waste
+  RECYCLED_MATERIALS         // "Recycled Materials" Made from materials that have been reused from previous products
+  WATER_EFFICIENT            // "Water-Efficient" Products or production processes that minimize water use
+  SOLAR_POWERED              // "Solar-Powered" Powered or produced using solar energy
+  MINIMAL_CARBON_FOOTPRINT   // "Minimal Carbon Footprint" Low greenhouse gas emissions throughout the lifecycle
+  ENERGY_EFFICIENT           // "Energy-Efficient" Designed to reduce energy use
+  ZERO_WASTE                 // "Zero Waste" Products or processes that aim to eliminate waste entirely
+  PLASTIC_FREE               // "Plastic-Free" Free from any plastic in materials or packaging
+  REPAIRABLE_DESIGN          // "Repairable Design" Designed to allow repairs to extend product life
+  UPCYCLED                   // "Upcycled" Made from waste materials transformed into something of higher value
+  CARBON_OFFSET              // "Carbon Offset" Initiatives or practices that compensate for carbon emissions
+  ORGANIC_MATERIALS          // "Organic Materials" Made from certified organic sources
+  FAIR_TRADE                 // "Fair Trade" Produced under ethical labor practices
+  VEGAN                      // "Vegan" No animal-derived materials used
+  NON_TOXIC                  // "Non-Toxic" Free from harmful chemicals (e.g., BPA-free, eco-friendly dyes)
+  REGENERATIVE_AGRICULTURE   // "Regenerative Agriculture" Sourced from farming practices that restore soil and biodiversity
+  SLOW_PRODUCTION            // "Slow Production" Emphasizes quality and sustainability over mass production
+  WASTE_REDUCING_DESIGN      // "Waste-Reducing Design" Designed to minimize waste during production or use
+  CIRCULAR_DESIGN            // "Circular Design" Intended for reuse, recycling, or repair as part of a circular economy
+  WILDLIFE_FRIENDLY          // "Wildlife-Friendly" Protects ecosystems and promotes biodiversity
+  DURABLE_DESIGN             // "Durable Design" Built to last and reduce replacement frequency
+  LOW_EMISSION_PRODUCTION    // "Low Emission Production" Processes that minimize greenhouse gas emissions
+  CHEMICAL_FREE              // "Chemical-Free" Free from synthetic chemicals harmful to the environment
+  CRUELTY_FREE               // "Cruelty-Free" Not tested on animals
+  TREE_FREE                  // "Tree-Free" Made without using wood-based products
+  ETHICALLY_SOURCED          // "Ethically Sourced" Sourced with respect for ethical labor and environmental practices
+  RENEWABLE_ENERGY_USED      // "Renewable Energy Used" Manufactured using renewable energy sources
+  SOCIALLY_RESPONSIBLE       // "Socially Responsible" Contributes to positive social impacts in communities
 }
 
 
@@ -76,7 +85,7 @@ model Product {
   
   // environmental insights:
   endOfLifeInfo             String?                @map("end_of_life_info")      // Disposal/recycling instructions
-  sourcing                 sourcing                // Where the product is manufactured local or international
+  sourcing                 Sourcing                // Where the product is manufactured local or international
   sustainabilityScore      String?                @map("sustainability_score")
   sustainabilityScoreReason      String?                @map("sustainability_score_reason")
   sustainabilityTag         String?                @map("sustainability_tag")    // Quick visual tag (e.g., "Low Energy", "Zero Waste")
