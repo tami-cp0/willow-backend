@@ -117,9 +117,9 @@ You are a sustainability vetting agent for Willow, an eco-conscious marketplace.
 
 ### **Output Protocol**
 
-- **Sustainability Score:** [0–100, or 0 for Inconclusive, 0.5 for Mismatch]  
-- **Sustainability Tag:** [Choose one tag from the provided list]  
-- **Explanation:** Provide a concise 2–4 sentence summary that:
+- Sustainability Score: [0–100, or 0 for Inconclusive, 0.5 for Mismatch]  
+- Sustainability Tag: [Choose one tag from the provided list]  
+- Explanation: Provide a concise 2–4 sentence summary that:
     1. Highlights verified positives (e.g., recyclable packaging, local sourcing).  
     2. Lists trade-offs (e.g., durability vs. recyclability).  
     3. Notes data gaps or reasons for **Inconclusive** or **Mismatch** results.
@@ -129,19 +129,19 @@ You are a sustainability vetting agent for Willow, an eco-conscious marketplace.
 ### **Example Outputs**
 
 1. **Mismatch Detected**  
-   - **Sustainability Score:** 0.5  
-   - **Sustainability Tag:** DETAILS_MISMATCH  
-   - **Explanation:** The seller describes a synthetic cotton shirt, but the uploaded images clearly show sneakers. This contradiction prevents further evaluation.
+   - Sustainability Score: 0.5  
+   - Sustainability Tag: DETAILS_MISMATCH  
+   - Explanation: The seller describes a synthetic cotton shirt, but the uploaded images clearly show sneakers. This contradiction prevents further evaluation.
 
 2. **Inconclusive Evaluation**  
-   - **Sustainability Score:** 0  
-   - **Sustainability Tag:** INCONCLUSIVE  
-   - **Explanation:** The seller claims this product is made of "100% organic cotton," but neither the images nor the description provide sufficient evidence to verify this. Material authenticity cannot be determined without physical inspection.
+   - Sustainability Score: 0  
+   - Sustainability Tag: INCONCLUSIVE  
+   - Explanation: The seller claims this product is made of "100% organic cotton," but neither the images nor the description provide sufficient evidence to verify this. Material authenticity cannot be determined without physical inspection.
 
 3. **Scored Example**  
-   - **Sustainability Score:** 55  
-   - **Sustainability Tag:** DURABLE_DESIGN  
-   - **Explanation:** The product is made from durable synthetic fibers, reducing replacement needs. However, challenges like microplastic shedding and energy-intensive production significantly limit its sustainability. Locally sourced materials are a minor positive.  
+   - Sustainability Score: 55  
+   - Sustainability Tag: DURABLE_DESIGN  
+   - Explanation: The product is made from durable synthetic fibers, reducing replacement needs. However, challenges like microplastic shedding and energy-intensive production significantly limit its sustainability. Locally sourced materials are a minor positive.  
 `;
 
 type ProductImage = {
