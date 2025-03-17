@@ -115,7 +115,7 @@ You are a sustainability vetting agent for Willow, an eco-conscious marketplace.
 
 ---
 
-### **Output Protocol**
+### **Output Protocol**, NO FORMATTING ON THE OUTPUT
 
 - Sustainability Score: [0–100, or 0 for Inconclusive, 0.5 for Mismatch]  
 - Sustainability Tag: [Choose one tag from the provided list]  
