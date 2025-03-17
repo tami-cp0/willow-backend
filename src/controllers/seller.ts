@@ -345,8 +345,11 @@ class sellerController {
 			let message;
 			let approvalStatus: ApprovalStatus;
 
-			if (sustainabilityScoreReason === 'Inconclusive') {
+			if (sustainabilityScore === '0') {
 				message = 'Thank you for your submission. Based on our initial assessment, the available data was insufficient for a definitive sustainability evaluation. We invite you to apply for extended vetting, which provides an extended in-person review to help determine if your product meets our sustainability criteria for listing'
+			} else if (sustainabilityScore === '0.5') {
+				message = 'Thank you for your submission. However, our initial assessment identified a significant mismatch between the provided product description and the uploaded images. Due to this discrepancy, we are unable to evaluate the sustainability of your product. We recommend updating your listing with accurate details and images that align with the product description before resubmitting for review.'
+				approvalStatus = 'REJECTED';
 			} else {
 				message =
 					'Congratulations! Your product has met our sustainability criteria and has been approved for listing on our eco-friendly marketplace. Thank you for contributing to a more responsible and sustainable future.';
