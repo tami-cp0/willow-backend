@@ -5,7 +5,7 @@ enum AIChatStatus {
 
 model AIChat {
   id          String     @id @default(ulid())
-  customer    Customer   @relation(fields: [customerId], references: [userId], onDelete: Cascade)
+  customer    Customer   @relation(fields: [customerId], references: [userId])
   customerId  String     @map("customer_id")
   status      AIChatStatus @default(OPEN)
   updatedAt   DateTime   @updatedAt

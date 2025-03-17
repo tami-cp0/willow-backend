@@ -6,6 +6,6 @@ model LastViewed {
   viewedAt    DateTime  @default(now()) @map("viewed_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  @@unique([customerId, productId])
+  @@unique([customerId, productId]) // Prevent duplicate entries for the same product per customer
   @@map("last_viewed")
 }
