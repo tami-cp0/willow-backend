@@ -1,15 +1,15 @@
-// import { Router } from "express";
-// import userController from "../controllers/user";
-// import { minimalRateLimiter, moderateRateLimiter } from "../utils/rateLimiters";
+import { Router } from "express";
 
 
-// const customerRouter = Router();
+const customerRouter = Router();
 
-// customerRouter.route('/customers/:userId').get();
-// customerRouter.route('/customers/:userId/update-profile').post();
+customerRouter.route('/customers/:userId').get();
+customerRouter.route('/customers/:userId/update-profile').post();
 
 // customerRouter.route('/customers/:userId/cart').get();
+// customerRouter.route('/customers/:userId/cart/checkout').post();
 // customerRouter.route('/customers/:userId/cart/:productId').post();
+// customerRouter.route('/customers/:userId/cart/:productId').patch();
 // customerRouter.route('/customers/:userId/cart/:productId').delete();
 
 // customerRouter.route('/customers/:userId/liked-products').post();
@@ -34,4 +34,8 @@
 // productRouter.route('/products/:productId/reviews/:reviewId').patch();
 // productRouter.route('/products/:productId/reviews/:reviewId').delete();
 
-// export default customerRouter;
+// customerRouter.route('/customers/:userId/conversations').get(minimalRateLimiter, authMiddleware, customerController.getConversations);
+// customerRouter.route('/customers/:userId/conversations/:conversationId').get(minimalRateLimiter, authMiddleware, customerController.getConversation);
+// customerRouter.route('/customers/:userId/conversations/:conversationId/messages').get(moderateRateLimiter, authMiddleware, customerController.getConversationMessages);
+
+export default customerRouter;
