@@ -23,6 +23,7 @@ export default class PaymentController {
 	) {
 		const https = require('https');
         const { email, amount } = req.body;
+        console.log(email, amount);
 
 		const params = JSON.stringify({ email, amount });
 
