@@ -2,6 +2,9 @@ import e, { NextFunction, Request, Response } from 'express';
 import crypto from 'crypto';
 import { ErrorHandler } from '../utils/errorHandler';
 import { ClientRequest, IncomingMessage } from 'http';
+import { config } from 'dotenv';
+
+config();
 
 export default class PaymentController {
 	private static readonly secret: string = process.env
