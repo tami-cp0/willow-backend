@@ -22,7 +22,7 @@ const frontendURL: string = process.env.FRONTEND_URL as string;
 let prisma: PrismaClient = new PrismaClient();
 export default prisma;
 
-const allowedOrigins: string[] = [backendURL, frontendURL, `http://${host}:${port}`, 'http://localhost:3000'];
+const allowedOrigins: string[] = [backendURL, frontendURL, `http://${host}:${port}`, 'http://localhost:3000', 'http://127.0.0.1:3001'];
 
 app.use(
 	cors({
