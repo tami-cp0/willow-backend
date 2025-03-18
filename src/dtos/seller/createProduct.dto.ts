@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsOptional, IsString, Length, IsNumber, IsEnum, IsArray, IsBoolean, IsJSON, validate } from 'class-validator';
-import { Packaging, sourcing, SustainabilityFeature } from '@prisma/client';
+import { Packaging, Sourcing, SustainabilityFeature } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { ErrorHandler } from '../../utils/errorHandler';
 import { Request } from 'express';
@@ -44,7 +44,7 @@ class CreateProductDto {
 
   @IsNotEmpty({ message: 'Sourcing is required' })
   @IsString({ message: 'sourcing must be a string' })
-  @IsEnum(sourcing, { message: 'Invalid sourcing provided'})
+  @IsEnum(Sourcing, { message: 'Invalid sourcing provided'})
   sourcing!: string;
 
   @IsNotEmpty({ message: 'Seller ID is required' })
