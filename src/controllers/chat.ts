@@ -5,7 +5,7 @@ import { User, Role } from '@prisma/client';
 // Track active connections, temporarily in-memory
 const activeConnections: Map<string, WebSocket> = new Map();
 
-class ChatController {
+export default class ChatController {
   // Set up connection and event handlers
   static setupConnection(ws: WebSocket, user: User) {
     activeConnections.set(user.id, ws);
@@ -205,5 +205,3 @@ class ChatController {
     return !!ws && ws.readyState === WebSocket.OPEN;
   }
 }
-
-export default ChatController;

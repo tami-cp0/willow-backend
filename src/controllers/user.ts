@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { sendEmail } from "../utils/sendEmails";
 import validateCreateUserDto from "../dtos/user/createUser.dto";
 
-class userController {
+export default class userController {
     static async register(req: Request, res: Response, next: NextFunction) {
         try {
           await validateCreateUserDto(req);
@@ -81,5 +81,3 @@ class userController {
         }
     }
 }
-
-export default userController;

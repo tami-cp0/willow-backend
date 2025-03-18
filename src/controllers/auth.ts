@@ -16,7 +16,7 @@ import validateResetPasswordDto from "../dtos/auth/resetPassword.dto";
 
 config();
 
-class authController {
+export default class authController {
     static async verifyAccount(req: Request, res: Response, next: NextFunction) {
         try {
             await validateVerifyAccountDto(req);
@@ -308,5 +308,3 @@ class authController {
 		}
 	}
 }
-
-export default authController;

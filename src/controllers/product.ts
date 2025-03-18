@@ -5,7 +5,7 @@ import validateGetAllProductsDto from '../dtos/product/getProducts.dto';
 import validateGetSingleProductDto from '../dtos/product/getProduct.dto';
 import validateGetProductReviewsDto from '../dtos/product/getProductReviews.dto';
 
-class productController {
+export default class productController {
     static async getAllProducts(req: Request, res: Response, next: NextFunction) {
         try {
           await validateGetAllProductsDto(req);
@@ -113,5 +113,3 @@ class productController {
         }
     }
 }
-
-export default productController;

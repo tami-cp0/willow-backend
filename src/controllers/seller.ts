@@ -26,7 +26,7 @@ type Image = {
 	originalname: string,
 }
 
-class sellerController {
+export default class sellerController {
 	static async getSeller(req: Request, res: Response, next: NextFunction) {
 		try {
 			const userId = req.params.sellerId;
@@ -567,5 +567,3 @@ class sellerController {
 		}
 	}
 }
-
-export default sellerController;
