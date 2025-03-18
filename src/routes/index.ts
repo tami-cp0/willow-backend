@@ -7,6 +7,7 @@ import swaggerSpec from "../docs/swagger";
 import productRouter from "./product";
 import customerRouter from "./customer";
 import sellerRouter from "./seller";
+import PaymentController from "../controllers/payment";
 
 const router = Router();
 
@@ -16,6 +17,10 @@ router.use('/api/v1/customers', customerRouter);
 router.use('/api/v1/products', productRouter);
 router.use('/api/v1/sellers', sellerRouter);
 router.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// verify payment
+router.post("/api/v1/paystack/webhook", PaymentController.verifyPayment);
+
 router.get("/", (req: Request, res: Response) => {
     res.redirect("/api/v1/docs");
 });
