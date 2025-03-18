@@ -5,8 +5,8 @@ import productController from "../controllers/product";
 
 const productRouter = Router();
 
-productRouter.route('/products').get(minimalRateLimiter, productController.getAllProducts);
-productRouter.route('/products/:productId').get(minimalRateLimiter, productController.getSingleProduct);
-productRouter.route('/products/:productId/reviews').get(minimalRateLimiter, productController.getProductReviews);
+productRouter.route('/').get(minimalRateLimiter, productController.getAllProducts);
+productRouter.route('/:productId').get(minimalRateLimiter, productController.getSingleProduct);
+productRouter.route('/:productId/reviews').get(minimalRateLimiter, productController.getProductReviews);
 
 export default productRouter;
