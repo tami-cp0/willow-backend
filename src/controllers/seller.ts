@@ -127,7 +127,7 @@ export default class sellerController {
 					where,
 					skip,
 					take: limit,
-					include: { product: true }
+					include: { product: true, order: { include: { transaction: true } } }
 				}),
 				prisma.orderItem.count({ where }),
 			]);
@@ -156,9 +156,7 @@ export default class sellerController {
 					id: req.params.orderId,
 					sellerId: req.user.id,
 				},
-				include: {
-					product: true,
-				},
+				include: { product: true, order: { include: { transaction: true } } }
 			});
 
 			if (!orderItem) {
