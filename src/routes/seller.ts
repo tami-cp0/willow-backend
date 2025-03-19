@@ -3,6 +3,7 @@ import { minimalRateLimiter, moderateRateLimiter, strictRateLimiter } from "../u
 import authMiddleware from "../middlewares/authMiddleware";
 import sellerController from "../controllers/seller";
 import { upload } from "../middlewares/upload";
+// import PaymentController from "../controllers/payment";
 
 const sellerRouter = Router();
 
@@ -25,5 +26,8 @@ sellerRouter.route('/:userId/products/:productId').delete(moderateRateLimiter, a
 sellerRouter.route('/:userId/conversations').get(minimalRateLimiter, authMiddleware, sellerController.getConversations);
 sellerRouter.route('/:userId/conversations/:conversationId').get(minimalRateLimiter, authMiddleware, sellerController.getConversation);
 sellerRouter.route('/:userId/conversations/:conversationId/messages').get(moderateRateLimiter, authMiddleware, sellerController.getConversationMessages);
+
+// withdrawals done manually temporarily
+// sellerRouter.route('/:userId/withdraw-revenue').post(moderateRateLimiter, PaymentController.withdrawPayment);
 
 export default sellerRouter;
