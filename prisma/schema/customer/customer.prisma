@@ -8,6 +8,7 @@ model Customer {
   points      Int      @default(0)
   
   cart                 Cart?
+  transanctions        Transaction[]
   orders               Order[]
   reviews              Review[]
   likedProducts        LikedProduct[]

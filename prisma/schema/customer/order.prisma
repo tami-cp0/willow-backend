@@ -2,13 +2,15 @@ model Order {
   id          String      @id @default(nanoid(12))
   customer    Customer        @relation(fields: [customerId], references: [userId], onDelete: Cascade)
   customerId  String      @map("customer_id")
-  totalCost   Float       @map("total_amount")
+  totalAmount   Float       @map("total_amount")
   address     Json
+  serviceFee  Int @map("service_fee")
+  deliveryFee Int @map("delivery_fee")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   orderItems  OrderItem[]
-  // payment     Payment?
+  transaction Transaction?
 
 
   @@map("orders")
