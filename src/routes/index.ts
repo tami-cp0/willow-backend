@@ -18,8 +18,8 @@ router.use('/api/v1/products', productRouter);
 router.use('/api/v1/sellers', sellerRouter);
 router.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// verify payment
-router.post("/api/v1/paystack/webhook", PaymentController.verifyPayment);
+// verify payment and transfer webhook
+router.post("/api/v1/paystack/webhook", PaymentController.verify);
 
 router.get("/", (req: Request, res: Response) => {
     res.redirect("/api/v1/docs");

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { minimalRateLimiter, moderateRateLimiter } from "../utils/rateLimiters";
+import { minimalRateLimiter, moderateRateLimiter, strictRateLimiter } from "../utils/rateLimiters";
 import authMiddleware from "../middlewares/authMiddleware";
 import customerController from "../controllers/customer";
 import PaymentController from "../controllers/payment";
@@ -13,7 +13,7 @@ customerRouter.route('/:userId/update-profile').post(moderateRateLimiter, authMi
 customerRouter.route('/:userId/cart').get(minimalRateLimiter, authMiddleware, customerController.getCart);
 customerRouter.route('/:userId/cart/:productId').put(minimalRateLimiter, authMiddleware, customerController.upsertCartItem); // add new or update cart item using upsert
 customerRouter.route('/:userId/cart/:productId').delete();
-customerRouter.route('/:userId/cart/checkout').post(minimalRateLimiter, PaymentController.initializePayment);
+customerRouter.route('/:userId/cart/checkout').post(strictRateLimiter, authMiddleware, PaymentController.initializePayment);
  
 
 
