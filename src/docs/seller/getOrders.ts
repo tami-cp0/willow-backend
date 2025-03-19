@@ -93,6 +93,69 @@
  *                           price:
  *                             type: number
  *                             example: 19.99
+ *                     order:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "order123"
+ *                         customerId:
+ *                           type: string
+ *                           example: "cust123"
+ *                         totalAmount:
+ *                           type: number
+ *                           example: 150.00
+ *                         address:
+ *                           type: object
+ *                           example:
+ *                             street: "123 Main St"
+ *                             city: "Lagos"
+ *                             country: "Nigeria"
+ *                         serviceFee:
+ *                           type: number
+ *                           example: 10
+ *                         deliveryFee:
+ *                           type: number
+ *                           example: 5
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2023-04-15T10:20:30.000Z"
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2023-04-15T11:00:00.000Z"
+ *                         orderItems:
+ *                           type: array
+ *                           items:
+ *                             $ref: "#/components/schemas/OrderItem"
+ *                         transaction:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               example: "trans123"
+ *                             customerId:
+ *                               type: string
+ *                               example: "cust123"
+ *                             reference:
+ *                               type: string
+ *                               example: "a4b5c6d7-e8f9-4a1b-8c2d-1234567890ab"
+ *                             paystackResponse:
+ *                               type: object
+ *                               example: {}
+ *                             status:
+ *                               type: string
+ *                               enum:
+ *                                 - FAILED
+ *                                 - SUCCESS
+ *                               example: "SUCCESS"
+ *                             totalAmount:
+ *                               type: number
+ *                               example: 15000
+ *                             orderId:
+ *                               type: string
+ *                               example: "order123"
  *                 pagination:
  *                   type: object
  *                   properties:
