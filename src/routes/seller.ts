@@ -24,8 +24,7 @@ sellerRouter.route('/:userId/products/:productId').get(minimalRateLimiter, selle
 sellerRouter.route('/:userId/products/:productId').delete(moderateRateLimiter, authMiddleware, sellerController.deleteProduct);
 
 sellerRouter.route('/:userId/conversations').get(minimalRateLimiter, authMiddleware, sellerController.getConversations);
-sellerRouter.route('/:userId/conversations/:conversationId').get(minimalRateLimiter, authMiddleware, sellerController.getConversation);
-sellerRouter.route('/:userId/conversations/:conversationId/messages').get(moderateRateLimiter, authMiddleware, sellerController.getConversationMessages);
+sellerRouter.route('/:userId/conversations/:conversationId').get(minimalRateLimiter, authMiddleware, sellerController.getConversationWithMessages); // undocumented
 
 // withdrawals done manually temporarily
 // sellerRouter.route('/:userId/withdraw-revenue').post(moderateRateLimiter, PaymentController.withdrawPayment);
