@@ -14,33 +14,24 @@ customerRouter.route('/:userId/cart').get(minimalRateLimiter, authMiddleware, cu
 customerRouter.route('/:userId/cart/:productId').put(minimalRateLimiter, authMiddleware, customerController.upsertCartItem); // add new or update cart item using upsert
 customerRouter.route('/:userId/cart/:productId').delete();
 customerRouter.route('/:userId/cart/checkout').post(strictRateLimiter, authMiddleware, PaymentController.initializePayment);
- 
 
+customerRouter.route('/:userId/liked-products/:productId').post(minimalRateLimiter, authMiddleware, customerController.likeProduct);
+customerRouter.route('/:userId/liked-products').get(minimalRateLimiter, authMiddleware, customerController.getLikedProducts);
+customerRouter.route('/:userId/liked-products/:productId').delete(minimalRateLimiter, authMiddleware, customerController.deleteLikedProduct);
 
-customerRouter.route('/:userId/liked-products').post();
-customerRouter.route('/:userId/liked-products').get();
-customerRouter.route('/:userId/liked-products').delete();
-
-// customerRouter.route('/customers/:userId/last-viewed').post();
-// customerRouter.route('/customers/:userId/last-viewed').get();
+customerRouter.route('/:userId/last-viewed').get(minimalRateLimiter, authMiddleware, customerController.getLastViewed);
 
 // customerRouter.route('/customers/:userId/recommendations').get();
 
-// customerRouter.route('/customers/:userId/orders').get();
-// customerRouter.route('/customers/:userId/orders/:orderId').get();
-
-// customerRouter.route('/customers/:userId/conversations').get();
-// customerRouter.route('/customers/:userId/conversations').post();
-// customerRouter.route('/customers/:userId/conversations/:conversationId').get();
+customerRouter.route('/:userId/orders').get(minimalRateLimiter, authMiddleware, customerController.getOrders); // query options: SUCCESS, FAILED
+customerRouter.route('/:userId/orders/:orderId').get(minimalRateLimiter, authMiddleware, customerController.getOrders);
 
 // customerRouter.route('/customers/:userId/ai-conversation').get();
 
-// productRouter.route('/products/:productId/reviews').post();
-// productRouter.route('/products/:productId/reviews/:reviewId').patch();
-// productRouter.route('/products/:productId/reviews/:reviewId').delete();
+customerRouter.route('/:userId/products/:productId/reviews').post(moderateRateLimiter, authMiddleware, customerController.createReview);
+customerRouter.route('/:userId/products/:productId/reviews/:reviewId').delete(moderateRateLimiter, authMiddleware, customerController.deleteReview);
 
-// customerRouter.route('/customers/:userId/conversations').get(minimalRateLimiter, authMiddleware, customerController.getConversations);
-// customerRouter.route('/customers/:userId/conversations/:conversationId').get(minimalRateLimiter, authMiddleware, customerController.getConversation);
-// customerRouter.route('/customers/:userId/conversations/:conversationId/messages').get(moderateRateLimiter, authMiddleware, customerController.getConversationMessages);
+customerRouter.route('/customers/:userId/conversations').get(minimalRateLimiter, authMiddleware, customerController.getConversations);
+customerRouter.route('/customers/:userId/conversations/:conversationId').get(minimalRateLimiter, authMiddleware, customerController.getConversationWithMessages);
 
 export default customerRouter;
