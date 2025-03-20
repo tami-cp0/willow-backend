@@ -5,6 +5,7 @@ import { ErrorHandler } from '../utils/errorHandler';
 import { config } from 'dotenv';
 import prisma from '../app';
 import { v4 as uuidv4 } from 'uuid';
+import { sendEmail } from '../utils/sendEmails';
 
 config();
 
@@ -168,15 +169,31 @@ export default class PaymentController {
 			switch (event.event) {
 				case 'charge.success':
 					console.log('Payment successful:', event.data);
-					await prisma.transaction.update({
+
+					const reference = event.data.reference
+					const transaction = await prisma.transaction.update({
 						where: {
-							reference: event.data.reference,
+							reference,
 						},
 						data: {
 							paystackResponse: event.data,
 							status: 'SUCCESS',
 						},
+						include: {
+							customer: {
+								include: {
+									user: true
+								}
+							}
+						}
 					});
+
+					sendEmail('payment', transaction.customer.user.email, '', '', null, {
+						transferRef: reference,
+						amount: transaction.totalAmount,
+						orderId: transaction.orderId
+					});
+	
 					break;
 
 				case 'charge.failed':
