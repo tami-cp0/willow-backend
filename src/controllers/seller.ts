@@ -13,18 +13,17 @@ import vetProduct from '../utils/vetProduct';
 import validateGetProductDto from '../dtos/seller/getProduct.dto';
 import validateDeleteProductDto from '../dtos/seller/deleteProduct.dto';
 import validateGetConversationsDto from '../dtos/seller/getConversations.dto';
-import validateGetConversationDto from '../dtos/seller/getConversation.dto';
 import { getSignedUrlForFile } from '../config/r2Config';
-import validateGetConversationMessagesDto from '../dtos/seller/getConversationMessages.dto';
 import { sendEmail } from '../utils/sendEmails';
+import validateGetConversationWithMessagesDto from '../dtos/seller/getConversationWithMessages.dto';
 
 type Image = {
-	key: string,
-	url: string,
-	size: number,
-	mimetype: string,
-	originalname: string,
-}
+	key: string;
+	url: string;
+	size: number;
+	mimetype: string;
+	originalname: string;
+};
 
 export default class sellerController {
 	static async getSeller(req: Request, res: Response, next: NextFunction) {
@@ -45,7 +44,7 @@ export default class sellerController {
 							reviews: true,
 						},
 					},
-					conversations: true
+					conversations: true,
 				},
 			});
 
@@ -54,7 +53,11 @@ export default class sellerController {
 			}
 
 			let avatar = user.avatar as Image;
-			avatar.url = await getSignedUrlForFile('avatars', avatar.key, 604800); // 7 days
+			avatar.url = await getSignedUrlForFile(
+				'avatars',
+				avatar.key,
+				604800
+			); // 7 days
 			user.avatar = avatar;
 
 			res.status(200).json({
@@ -83,7 +86,7 @@ export default class sellerController {
 					size: file.size,
 					mimetype: file.mimetype,
 					originalname: file.originalname,
-				}
+				};
 			}
 
 			const { businessName, bio } = req.body;
@@ -127,7 +130,10 @@ export default class sellerController {
 					where,
 					skip,
 					take: limit,
-					include: { product: true, order: { include: { transaction: true } } }
+					include: {
+						product: true,
+						order: { include: { transaction: true } },
+					},
 				}),
 				prisma.orderItem.count({ where }),
 			]);
@@ -156,7 +162,10 @@ export default class sellerController {
 					id: req.params.orderId,
 					sellerId: req.user.id,
 				},
-				include: { product: true, order: { include: { transaction: true } } }
+				include: {
+					product: true,
+					order: { include: { transaction: true } },
+				},
 			});
 
 			if (!orderItem) {
@@ -217,7 +226,7 @@ export default class sellerController {
 
 			const where: Record<string, any> = { sellerId: req.params.userId };
 
-			if (status && status !== 'OUT_OF_STOCK' ) {
+			if (status && status !== 'OUT_OF_STOCK') {
 				where.approvalStatus = status;
 			}
 
@@ -226,13 +235,15 @@ export default class sellerController {
 					where,
 					skip,
 					take: limit,
-					include: { reviews: true, seller: true }
+					include: { reviews: true, seller: true },
 				}),
 				prisma.product.count({ where }),
 			]);
 
 			if (status && status === 'OUT_OF_STOCK') {
-				products = products.filter((product: Product) => product.inStock === 0)
+				products = products.filter(
+					(product: Product) => product.inStock === 0
+				);
 			}
 
 			res.status(200).json({
@@ -344,9 +355,11 @@ export default class sellerController {
 			let approvalStatus: ApprovalStatus;
 
 			if (sustainabilityScore === '0') {
-				message = 'Thank you for your submission. Based on our initial assessment, the available data was insufficient for a definitive sustainability evaluation. We invite you to apply for extended vetting, which provides an extended in-person review to help determine if your product meets our sustainability criteria for listing'
+				message =
+					'Thank you for your submission. Based on our initial assessment, the available data was insufficient for a definitive sustainability evaluation. We invite you to apply for extended vetting, which provides an extended in-person review to help determine if your product meets our sustainability criteria for listing';
 			} else if (sustainabilityScore === '0.5') {
-				message = 'Thank you for your submission. However, our initial assessment identified a significant mismatch between the provided product description and the uploaded images. Due to this discrepancy, we are unable to evaluate the sustainability of your product. We recommend updating your listing with accurate details and images that align with the product description before resubmitting for review.'
+				message =
+					'Thank you for your submission. However, our initial assessment identified a significant mismatch between the provided product description and the uploaded images. Due to this discrepancy, we are unable to evaluate the sustainability of your product. We recommend updating your listing with accurate details and images that align with the product description before resubmitting for review.';
 				approvalStatus = 'REJECTED';
 			} else {
 				message =
@@ -370,10 +383,17 @@ export default class sellerController {
 
 				let certificate;
 				if (certificate) {
-					certificate = true // for frontend
+					certificate = true; // for frontend
 					approvalStatus = 'PENDING';
-					message = "Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
-					sendEmail('certificate', req.user.email as string, '', '', product);
+					message =
+						"Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
+					sendEmail(
+						'certificate',
+						req.user.email as string,
+						'',
+						'',
+						product
+					);
 				}
 
 				await prisma.$executeRawUnsafe(
@@ -408,160 +428,149 @@ export default class sellerController {
 
 	static async getProduct(req: Request, res: Response, next: NextFunction) {
 		try {
-		  await validateGetProductDto(req);
-		  
-		  const { productId } = req.params;
-		  
-		  const product = await prisma.product.findUnique({
-			where: {
-			  id: productId,
-			},
-			include: {
-				reviews: true,
-				seller: true
+			await validateGetProductDto(req);
+
+			const { productId } = req.params;
+
+			const product = await prisma.product.findUnique({
+				where: {
+					id: productId,
+				},
+				include: {
+					reviews: true,
+					seller: true,
+				},
+			});
+
+			if (!product) {
+				throw new ErrorHandler(404, 'Product not found');
 			}
-		  });
-	
-		  if (!product) {
-			throw new ErrorHandler(404, 'Product not found');
-		  }
-	
-		  res.status(200).json({
-			status: 'success',
-			data: product,
-		  });
-		} catch (error) {
-		  next(error);
-		}
-	  }
 
-	  static async deleteProduct(req: Request, res: Response, next: NextFunction) {
-		try {
-		  await validateDeleteProductDto(req);
-
-		  const { userId, productId } = req.params;
-	
-		  const product = await prisma.product.findFirst({
-			where: {
-			  id: productId,
-			  sellerId: userId,
-			},
-		  });
-		  
-		  if (!product) {
-			throw new ErrorHandler(404, 'Product not found');
-		  }
-	
-		  await prisma.product.delete({
-			where: { id: productId },
-		  });
-	
-		  res.status(204).end();
+			res.status(200).json({
+				status: 'success',
+				data: product,
+			});
 		} catch (error) {
-		  next(error);
+			next(error);
 		}
 	}
 
-	static async getConversations(req: Request, res: Response, next: NextFunction) {
+	static async deleteProduct(
+		req: Request,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
-		  await validateGetConversationsDto(req);
-		  const { userId } = req.params;
-		  
-		  const conversations = await prisma.conversation.findMany({
-			where: { sellerId: userId },
-			include: {
-			  customer: true,
-			  seller: true,
-			  messages: {
-				orderBy: { createdAt: 'desc' },
-				take: 1
-			  },
-			},
-			orderBy: { updatedAt: 'desc' }
-		  });
-		  
-		  res.status(200).json({
-			status: 'success',
-			data: conversations,
-		  });
+			await validateDeleteProductDto(req);
+
+			const { userId, productId } = req.params;
+
+			const product = await prisma.product.findFirst({
+				where: {
+					id: productId,
+					sellerId: userId,
+				},
+			});
+
+			if (!product) {
+				throw new ErrorHandler(404, 'Product not found');
+			}
+
+			await prisma.product.delete({
+				where: { id: productId },
+			});
+
+			res.status(204).end();
 		} catch (error) {
-		  next(error);
+			next(error);
 		}
 	}
 
-	static async getConversation(req: Request, res: Response, next: NextFunction) {
+	static async getConversations(
+		req: Request,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
-		  await validateGetConversationDto(req);
-		  const { conversationId, userId } = req.params;
-		  
-		  const conversation = await prisma.conversation.findFirst({
-			where: {
-			  id: conversationId,
-			  sellerId: userId,
-			},
-			include: {
-			  customer: true,
-			  seller: true,
-			  messages: {
-				orderBy: { createdAt: 'asc' },
-			  },
-			},
-		  });
-		  
-		  if (!conversation) {
-			throw new ErrorHandler(404, 'Conversation not found');
-		  }
-		  
-		  res.status(200).json({
-			status: 'success',
-			data: conversation,
-		  });
+			await validateGetConversationsDto(req);
+			const { userId } = req.params;
+
+			const conversations = await prisma.conversation.findMany({
+				where: { sellerId: userId },
+				include: {
+					customer: true,
+					seller: true,
+					messages: {
+						orderBy: { createdAt: 'desc' },
+						take: 1,
+					},
+				},
+				orderBy: { updatedAt: 'desc' },
+			});
+
+			res.status(200).json({
+				status: 'success',
+				data: conversations,
+			});
 		} catch (error) {
-		  next(error);
+			next(error);
 		}
 	}
 
-	static async getConversationMessages(req: Request, res: Response, next: NextFunction) {
+	static async getConversationWithMessages(
+		req: Request,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
-		  await validateGetConversationMessagesDto(req);
-		  const { conversationId, userId } = req.params;
-		  
-		  const conversation = await prisma.conversation.findFirst({
-			where: {
-			  id: conversationId,
-			  sellerId: userId,
-			},
-		  });
-		  
-		  if (!conversation) {
-			throw new ErrorHandler(404, 'Conversation not found');
-		  }
-		  
-		  // Retrieve messages for the conversation, ordered by creation time.
-		  let messages = await prisma.message.findMany({
-			where: { conversationId },
-			orderBy: { createdAt: 'asc' },
-		  });
+			await validateGetConversationWithMessagesDto(req);
+			const { conversationId, userId } = req.params;
 
-		  // add p-limit later to limit concurrency - npm install p-limit.
-		  messages = await Promise.all(
-			messages.map(async (message) => {
-			  const images = message.images as Image[];
-			  await Promise.all(
-				images.map(async (image) => {
-				  image.url = await getSignedUrlForFile('messagemedia', image.key, 1);
+			const conversation = await prisma.conversation.findFirst({
+				where: {
+					id: conversationId,
+					sellerId: userId,
+				},
+				include: {
+					customer: true,
+					seller: true,
+					messages: {
+						orderBy: { createdAt: 'asc' },
+					},
+				},
+			});
+
+			if (!conversation) {
+				throw new ErrorHandler(404, 'Conversation not found');
+			}
+
+			// Process each message: sign all image URLs
+			conversation.messages = await Promise.all(
+				conversation.messages.map(async (message) => {
+					// Assuming message.images is an array of images, each with a "key" property
+					const images = message.images as Image[];
+					if (images && images.length) {
+						message.images = await Promise.all(
+							images.map(async (image) => {
+								image.url = await getSignedUrlForFile(
+									'messagemedia',
+									image.key,
+									1
+								);
+								return image;
+							})
+						);
+					}
+					return message;
 				})
-			  );
-			  return message;
-			})
-		  );	
+			);
 
-		  res.status(200).json({
-			status: 'success',
-			data: messages,
-		  });
+			res.status(200).json({
+				status: 'success',
+				data: conversation,
+			});
 		} catch (error) {
-		  next(error);
+			next(error);
 		}
 	}
 }
