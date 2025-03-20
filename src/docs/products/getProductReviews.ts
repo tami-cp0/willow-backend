@@ -9,6 +9,8 @@
  *       This endpoint requires cookie-based authentication.
  *     tags:
  *       - Products
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
