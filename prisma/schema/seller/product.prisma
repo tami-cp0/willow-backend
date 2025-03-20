@@ -73,7 +73,6 @@ model Product {
   options                   Json?                   // Flexible options (e.g., size, color)
   price                     Float                  
   soldOut                   Boolean                @default(false) @map("sold_out")
-  isLiked                   Boolean                @default(false) @map("is_liked")
   isReported                Boolean                @default(false) @map("is_reported")
   reportCount               Int                    @default(0) @map("report_count")// 10 strikes and you will be de-listed
   reportMessages            Json?                  // json array of messages
