@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { minimalRateLimiter, moderateRateLimiter, strictRateLimiter } from "../utils/rateLimiters";
+import { aiChatRateLimiter, minimalRateLimiter, moderateRateLimiter, strictRateLimiter } from "../utils/rateLimiters";
 import authMiddleware from "../middlewares/authMiddleware";
 import customerController from "../controllers/customer";
 import PaymentController from "../controllers/payment";
@@ -26,7 +26,8 @@ customerRouter.route('/:userId/last-viewed').get(minimalRateLimiter, authMiddlew
 customerRouter.route('/:userId/orders').get(minimalRateLimiter, authMiddleware, customerController.getOrders); // query options: SUCCESS, FAILED
 customerRouter.route('/:userId/orders/:orderId').get(minimalRateLimiter, authMiddleware, customerController.getOrders);
 
-// customerRouter.route('/customers/:userId/ai-conversation').get();
+customerRouter.route('/customers/:userId/ai-conversation').get(minimalRateLimiter, authMiddleware, customerController.getAIChat);
+customerRouter.route('/customers/:userId/ai-conversation').post(aiChatRateLimiter, authMiddleware, customerController.postAIChat);
 
 customerRouter.route('/:userId/products/:productId/reviews').post(moderateRateLimiter, authMiddleware, customerController.createReview);
 customerRouter.route('/:userId/products/:productId/reviews/:reviewId').delete(moderateRateLimiter, authMiddleware, customerController.deleteReview);

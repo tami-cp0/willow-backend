@@ -17,6 +17,9 @@ import validateCreateReviewDto from '../dtos/customer/postReview.dto';
 import { getSignedUrlForFile } from '../config/r2Config';
 import validateGetConversationsDto from '../dtos/customer/getConversations.dto';
 import validateGetConversationWithMessagesDto from '../dtos/customer/getConversationWithMessages.dto';
+import validateGetAIChatDto from '../dtos/customer/getAIChat.dto';
+import validatePostAIChatDto from '../dtos/customer/postAIChat.dto';
+import processUserQuery from '../utils/queryAI';
 
 type Image = {
 	key: string;
@@ -47,11 +50,7 @@ export default class customerController {
 							product: true,
 						},
 					},
-					AIChats: {
-						include: {
-							messages: true,
-						},
-					},
+					AIChats: true,
 				},
 			});
 
@@ -196,36 +195,6 @@ export default class customerController {
 			next(error);
 		}
 	}
-
-	// static async likeProduct(req: Request, res: Response, next: NextFunction) {
-	//   try {
-	//     await validateLikeProductDto(req);
-	//     const { userId } = req.params;
-	//     const { productId } = req.body;
-
-	//     // Ensure product exists
-	//     const product = await prisma.product.findUnique({
-	//       where: { id: productId, isLiked: true },
-	//     });
-	//     if (!product) {
-	//       throw new ErrorHandler(404, 'Product not found');
-	//     }
-
-	//     // Upsert liked product
-	//     await prisma.likedProduct.upsert({
-	//       where: { customerId_productId: { customerId: userId, productId } },
-	//       update: { updatedAt: new Date() }, // Updates timestamp if already liked
-	//       create: { customerId: userId, productId },
-	//     });
-
-	//     res.status(201).json({
-	//       status: 'success',
-	//       message: 'Product liked successfully',
-	//     });
-	//   } catch (error) {
-	//     next(error);
-	//   }
-	// }
 
 	static async likeProduct(req: Request, res: Response, next: NextFunction) {
 		try {
@@ -466,91 +435,177 @@ export default class customerController {
 		}
 	}
 
-    static async getConversations(
-            req: Request,
-            res: Response,
-            next: NextFunction
-        ) {
-            try {
-                await validateGetConversationsDto(req);
-                const { userId } = req.params;
-    
-                const conversations = await prisma.conversation.findMany({
-                    where: { customerId: userId },
-                    include: {
-                        customer: true,
-                        seller: true,
-                        messages: {
-                            orderBy: { createdAt: 'desc' },
-                            take: 1,
-                        },
-                    },
-                    orderBy: { updatedAt: 'desc' },
+	static async getConversations(
+		req: Request,
+		res: Response,
+		next: NextFunction
+	) {
+		try {
+			await validateGetConversationsDto(req);
+			const { userId } = req.params;
+
+			const conversations = await prisma.conversation.findMany({
+				where: { customerId: userId },
+				include: {
+					customer: true,
+					seller: true,
+					messages: {
+						orderBy: { createdAt: 'desc' },
+						take: 1,
+					},
+				},
+				orderBy: { updatedAt: 'desc' },
+			});
+
+			res.status(200).json({
+				status: 'success',
+				data: conversations,
+			});
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	static async getConversationWithMessages(
+		req: Request,
+		res: Response,
+		next: NextFunction
+	) {
+		try {
+			await validateGetConversationWithMessagesDto(req);
+			const { conversationId, userId } = req.params;
+
+			const conversation = await prisma.conversation.findFirst({
+				where: {
+					id: conversationId,
+					customerId: userId,
+				},
+				include: {
+					customer: true,
+					seller: true,
+					messages: {
+						orderBy: { createdAt: 'asc' },
+					},
+				},
+			});
+
+			if (!conversation) {
+				throw new ErrorHandler(404, 'Conversation not found');
+			}
+
+			// Process each message: sign all image URLs
+			conversation.messages = await Promise.all(
+				conversation.messages.map(async (message) => {
+					// Assuming message.images is an array of images, each with a "key" property
+					const images = message.images as Image[];
+					if (images && images.length) {
+						message.images = await Promise.all(
+							images.map(async (image) => {
+								image.url = await getSignedUrlForFile(
+									'messagemedia',
+									image.key,
+									1
+								);
+								return image;
+							})
+						);
+					}
+					return message;
+				})
+			);
+
+			res.status(200).json({
+				status: 'success',
+				data: conversation,
+			});
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	static async getAIChat(req: Request, res: Response, next: NextFunction) {
+		try {
+			await validateGetAIChatDto(req);
+			const { userId } = req.params;
+
+			let AIChat = await prisma.aIChat.findUnique({
+				where: {
+					customerId: userId
+				}
+			});
+
+			if (!AIChat) {
+				AIChat = await prisma.aIChat.create({
+                    data: {
+                      customerId: userId
+                    }
                 });
-    
-                res.status(200).json({
-                    status: 'success',
-                    data: conversations,
-                });
-            } catch (error) {
-                next(error);
-            }
-        }
-    
-        static async getConversationWithMessages(
-            req: Request,
-            res: Response,
-            next: NextFunction
-        ) {
-            try {
-                await validateGetConversationWithMessagesDto(req);
-                const { conversationId, userId } = req.params;
-    
-                const conversation = await prisma.conversation.findFirst({
-                    where: {
-                        id: conversationId,
-                        customerId: userId,
-                    },
-                    include: {
-                        customer: true,
-                        seller: true,
-                        messages: {
-                            orderBy: { createdAt: 'asc' },
-                        },
-                    },
-                });
-    
-                if (!conversation) {
-                    throw new ErrorHandler(404, 'Conversation not found');
-                }
-    
-                // Process each message: sign all image URLs
-                conversation.messages = await Promise.all(
-                    conversation.messages.map(async (message) => {
-                        // Assuming message.images is an array of images, each with a "key" property
-                        const images = message.images as Image[];
-                        if (images && images.length) {
-                            message.images = await Promise.all(
-                                images.map(async (image) => {
-                                    image.url = await getSignedUrlForFile(
-                                        'messagemedia',
-                                        image.key,
-                                        1
-                                    );
-                                    return image;
-                                })
-                            );
-                        }
-                        return message;
-                    })
-                );
-    
-                res.status(200).json({
-                    status: 'success',
-                    data: conversation,
-                });
-            } catch (error) {
-                next(error);
-            }
-    }
+			}
+
+			// Remove the first JSON element from the history array which contains system instructions
+			const modifiedHistory =
+				AIChat.history && AIChat.history.length > 0
+					? AIChat.history.slice(1)
+					: [];
+
+			AIChat.history = modifiedHistory;
+
+			res.status(200).json({
+				status: 'success',
+				data:  AIChat,
+			});
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	static async postAIChat(req: Request, res: Response, next: NextFunction) {
+		try {
+			await validatePostAIChatDto(req);
+			const { userId } = req.params;
+			const { userQuery } = req.body;
+
+			const { text, history, instruction } = await processUserQuery(
+				userQuery,
+				userId
+			);
+
+			const newHistoryEntryUser = {
+				role: 'user',
+				parts: [{ text: userQuery }],
+			};
+			const newHistoryEntryModel = {
+				role: 'model',
+				parts: [{ text }],
+			};
+			const updatedHistory = [
+				...history,
+				newHistoryEntryUser,
+				newHistoryEntryModel,
+			];
+
+			// Ensure the system instruction is at the start of the history.
+			if (
+				!updatedHistory[0] ||
+				updatedHistory[0].parts[0].text !== instruction.trim()
+			) {
+				updatedHistory.unshift({
+					role: 'user',
+					parts: [{ text: instruction.trim() }],
+				});
+			}
+
+			await prisma.aIChat.update({
+				where: { customerId: userId },
+				data: { history: updatedHistory },
+			});
+
+			res.status(201).json({
+				status: 'success',
+				data: text,
+			});
+		} catch (error) {
+			next(error);
+		}
+	}
 }
