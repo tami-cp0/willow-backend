@@ -52,26 +52,27 @@ export const strictRateLimiter = rateLimit({
     })
 });
 
-/**
- * Limits requests to 1 per minute.
- * like for otp and emails
- */
-export const aiSearchRateLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000,
-    max: 5,
-    handler: (req, res, next) => rateLimitHandler(req, res, next, {
-        time: "1 minute",
-        message: "AI toggle can only be used 5 times per hour for free trial"
-    })
-});
+// scrapped
+// /**
+//  * Limits requests to 1 per minute.
+//  * like for otp and emails
+//  */
+// export const aiSearchRateLimiter = rateLimit({
+//     windowMs: 60 * 60 * 1000,
+//     max: 5,
+//     handler: (req, res, next) => rateLimitHandler(req, res, next, {
+//         time: "1 minute",
+//         message: "AI toggle can only be used 5 times per hour for free trial"
+//     })
+// });
 
 /**
- * Limits requests to 1 per minute.
+ * Limits requests to 10 per hour.
  * like for otp and emails
  */
 export const aiChatRateLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
-    max: 15,
+    max: 10,
     handler: (req, res, next) => rateLimitHandler(req, res, next, {
         message: "You have exceeded your free limit, Try again in an hour."
     })
