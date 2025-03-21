@@ -6,6 +6,7 @@ import { config } from 'dotenv';
 import prisma from '../app';
 import { v4 as uuidv4 } from 'uuid';
 import { sendEmail } from '../utils/sendEmails';
+import { CartItem } from '@prisma/client';
 
 config();
 
@@ -34,7 +35,6 @@ export default class PaymentController {
 				email,
 				amount,
 				address,
-				cartItems,
 				serviceFee,
 				deliveryFee,
 			} = req.body; // cartItems = [{ sellerId, productId, quantity, price }, ...]
@@ -51,7 +51,6 @@ export default class PaymentController {
 				!email ||
 				!amount ||
 				!address ||
-				!cartItems?.length ||
 				!serviceFee ||
 				!deliveryFee
 			) {
@@ -100,6 +99,18 @@ export default class PaymentController {
 
 			const reference = parsedData.data.reference;
 			const accessCode = parsedData.data.access_code;
+
+			// get cart items
+			const cart = await prisma.cart.findMany({
+				where: {
+					customerId: userId
+				},
+				include: {
+					cartItems: true
+				}
+			}) as any;
+
+			const cartItems: CartItem[] = cart.cartItems
 
 			// Create the order, order items, and transaction in one Prisma query
 			const order = await prisma.order.create({
