@@ -17,7 +17,7 @@ model Customer {
   recommendations      Recommendation[]
   lastViewed           LastViewed[]
   conversations        Conversation[]
-  AIChat              AIChat[]
+  AIChat              AIChat[]   // CHANGE TO PLURAL LATER
 
 
   @@map("customers")
