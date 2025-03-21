@@ -4,7 +4,7 @@
  *   get:
  *     summary: Get last viewed products
  *     description: >
- *       Retrieves the last 5 products viewed by the customer, ordered by the viewedAt timestamp in descending order (newest to olders).
+ *       Retrieves the last 5 products viewed by the customer in descending order (newest to olders).
  *       This endpoint requires cookie-based authentication.
  *     tags:
  *       - Customers
