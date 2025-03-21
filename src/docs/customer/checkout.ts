@@ -37,29 +37,6 @@
  *                 type: object
  *                 description: The delivery address as a JSON object.
  *                 example: { "street": "123 Main St", "city": "Lagos", "zip": "101001" }
- *               cartItems:
- *                 type: array
- *                 description: An array of cart item objects. Each object should include the product details, quantity, etc.
- *                 items:
- *                   type: object
- *                   properties:
- *                     product:
- *                       type: object
- *                       description: The product being purchased.
- *                       properties:
- *                         productId:
- *                           type: string
- *                           example: "prod789"
- *                         sellerId:
- *                           type: string
- *                           example: "seller123"
- *                         price:
- *                           type: number
- *                           example: 1500
- *                     quantity:
- *                       type: number
- *                       description: Quantity of the product.
- *                       example: 2
  *               serviceFee:
  *                 type: number
  *                 description: The service fee amount.
