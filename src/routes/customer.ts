@@ -12,7 +12,7 @@ customerRouter.route('/:userId/update-profile').post(moderateRateLimiter, authMi
 
 customerRouter.route('/:userId/cart').get(minimalRateLimiter, authMiddleware, customerController.getCart);
 customerRouter.route('/:userId/cart/:productId').put(minimalRateLimiter, authMiddleware, customerController.upsertCartItem); // add new or update cart item using upsert
-customerRouter.route('/:userId/cart/:productId').delete();
+customerRouter.route('/:userId/cart/:productId').delete(minimalRateLimiter, authMiddleware, customerController.deleteCartItem);
 customerRouter.route('/:userId/cart/checkout').post(strictRateLimiter, authMiddleware, PaymentController.initializePayment);
 
 customerRouter.route('/:userId/liked-products/:productId').post(minimalRateLimiter, authMiddleware, customerController.likeProduct);
@@ -24,7 +24,7 @@ customerRouter.route('/:userId/last-viewed').get(minimalRateLimiter, authMiddlew
 // customerRouter.route('/customers/:userId/recommendations').get();
 
 customerRouter.route('/:userId/orders').get(minimalRateLimiter, authMiddleware, customerController.getOrders); // query options: SUCCESS, FAILED
-customerRouter.route('/:userId/orders/:orderId').get(minimalRateLimiter, authMiddleware, customerController.getOrders);
+customerRouter.route('/:userId/orders/:orderId').get(minimalRateLimiter, authMiddleware, customerController.getOrder);
 
 customerRouter.route('/customers/:userId/ai-conversation').get(minimalRateLimiter, authMiddleware, customerController.getAIChat);
 customerRouter.route('/customers/:userId/ai-conversation').post(aiChatRateLimiter, authMiddleware, customerController.postAIChat);
