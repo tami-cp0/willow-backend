@@ -50,7 +50,7 @@ export default class customerController {
 							product: true,
 						},
 					},
-					AIChats: true,
+					AIChat: true,
 				},
 			});
 
