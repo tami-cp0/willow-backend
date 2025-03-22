@@ -34,10 +34,9 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
                 }
             });
             if (!user) return next(new ErrorHandler(404, "Account does not exist: Invalid ID"));
-            if (!user.isVerified) return next(new ErrorHandler(403, 'Account is not verified'));
-
             await cache.storeUser(user);
         }
+        if (!user.isVerified) return next(new ErrorHandler(403, 'Account is not verified'));
 
         req.user = user;
 
