@@ -28,7 +28,7 @@ type Image = {
 export default class sellerController {
 	static async getSeller(req: Request, res: Response, next: NextFunction) {
 		try {
-			const userId = req.params.sellerId;
+			const userId = req.params.userId;
 			if (!userId) {
 				return next(new ErrorHandler(400, 'Seller ID is required'));
 			}
@@ -52,13 +52,16 @@ export default class sellerController {
 				return next(new ErrorHandler(404, 'Seller not found'));
 			}
 
-			let avatar = user.avatar as Image;
-			avatar.url = await getSignedUrlForFile(
-				'avatars',
-				avatar.key,
-				604800
-			); // 7 days
-			user.avatar = avatar;
+			let avatar = user?.avatar as Image;
+
+			if (avatar) {
+				avatar.url = await getSignedUrlForFile(
+					'avatars',
+					avatar.key,
+					604800
+				); // 7 days
+				user.avatar = avatar;
+			}
 
 			res.status(200).json({
 				status: 'success',
