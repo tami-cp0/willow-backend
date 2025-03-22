@@ -16,7 +16,7 @@ sellerRouter.route('/:userId/orders/:orderId').get(minimalRateLimiter, authMiddl
 sellerRouter.route('/:userId/orders/:orderId/update-status').patch(minimalRateLimiter, authMiddleware, sellerController.updateOrderStatus);
 
 sellerRouter.route('/:userId/products').get(minimalRateLimiter, sellerController.getProducts); // pagination; optional queries PENDING, APPROVED, REJECTED
-sellerRouter.route('/:userId/products').post(strictRateLimiter, authMiddleware, upload.fields([
+sellerRouter.route('/:userId/products').post(moderateRateLimiter, authMiddleware, upload.fields([
     { name: 'certificate', maxCount: 1 },
     { name: 'images', maxCount: 5 }
   ]), sellerController.createProduct);
