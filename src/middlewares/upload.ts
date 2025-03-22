@@ -12,7 +12,7 @@ const s3Storage = multerS3({
     }
     cb(null, bucketName);
   },  
-  acl: "public",
+  acl: "private",
   contentType: multerS3.AUTO_CONTENT_TYPE,
   key: (req: Express.Request, file: Express.Multer.File, cb: (error: any, key?: string) => void) => {
     const key = `${Date.now()}-${file.originalname}`;
@@ -21,23 +21,24 @@ const s3Storage = multerS3({
 });
 
 function fileFilter(req: any, file: Express.Multer.File, cb: (error: any, acceptFile?: boolean) => void) {
-  if (file.fieldname === 'avatar' && !file.mimetype.startsWith("image/")) {
-    return cb(new ErrorHandler(400, "Only images are allowed"));
-  }
-
-  if (file.fieldname === 'certificate' && !file.mimetype.startsWith("video/")) {
-    cb(null, true);
-  }
-
   if (file.fieldname === 'images') {
     if (!file.mimetype.startsWith("image/")) {
       return cb(new ErrorHandler(400, "Only images are allowed"));
     }
     return cb(null, true);
   }
+
+  if (file.fieldname === 'certificate') {
+    if (!file.mimetype.startsWith("image/") && file.mimetype !== 'application/pdf') {
+      return cb(new ErrorHandler(400, "Only image or PDF files are allowed for certificates"));
+    }
+    return cb(null, true);
+  }
+
   // Reject files from unexpected fields
   return cb(new ErrorHandler(400, "Unexpected field"));
 };
+
 
 export const upload = multer({
   storage: s3Storage,
