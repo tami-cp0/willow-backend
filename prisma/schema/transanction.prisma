@@ -8,10 +8,10 @@ model Transaction {
     customerId  String    @map("customer_id")
     customer    Customer  @relation(fields: [customerId], references: [userId])
     reference    String     @unique
-    paystackResponse  Json?
+    paystackResponse  Json?  @map("paystack_response")
     status      TransactionStatus  @default(FAILED)
-    totalAmount   Int
-    orderId       String   @unique
+    totalAmount   Int      @map("total_amount")
+    orderId       String   @unique  @map("order_id")
     order         Order   @relation(fields: [orderId], references: [id])
 
     @@map("transactions")

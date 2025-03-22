@@ -3,7 +3,8 @@ model LikedProduct {
   customerId  String    @map("customer_id")
   product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId   String    @map("product_id")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  weight      Float     @default(6)
+  createdAt   DateTime  @updatedAt @map("created_at")
 
   @@unique([customerId, productId])
   @@map("liked_products")

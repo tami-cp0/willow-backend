@@ -5,6 +5,7 @@ model Review {
   customer   Customer @relation(fields: [customerId], references: [userId], onDelete: Cascade)
   customerId String   @map("customer_id")
   rating     Int      // 1 - 5 scale
+  weight      Float
   comment    String?  @db.VarChar(255)
   createdAt  DateTime @default(now()) @map("created_at")
 

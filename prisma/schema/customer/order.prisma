@@ -2,6 +2,7 @@ model Order {
   id          String      @id @default(nanoid(12))
   customer    Customer        @relation(fields: [customerId], references: [userId], onDelete: Cascade)
   customerId  String      @map("customer_id")
+  weight      Float     @default(8)
   totalAmount   Float       @map("total_amount")
   address     Json
   serviceFee  Int @map("service_fee")

@@ -7,7 +7,7 @@ model Conversation {
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
-  isFlagged   Boolean    @default(false)
+  isFlagged   Boolean    @default(false) @map("is_flagged")
 
   messages    Message[]
 
