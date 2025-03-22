@@ -40,6 +40,9 @@
  *                     role:
  *                       type: string
  *                       example: "CUSTOMER"
+ *                     subscribed:
+ *                       type: boolean
+ *                       example: false
  *                     status:
  *                       type: string
  *                       example: "ACTIVE"
