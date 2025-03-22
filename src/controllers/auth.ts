@@ -124,6 +124,8 @@ export default class authController {
                 },
             }) as User;
 
+            if (!user.isVerified) return next(new ErrorHandler(403, "Account is not verified"));
+
             const payload: CustomJwtPayload = {
                 id: user.id, role: user.role
             };
