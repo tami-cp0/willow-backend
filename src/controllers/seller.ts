@@ -288,8 +288,15 @@ export default class sellerController {
 				sourcing,
 			} = req.body;
 
-			const uploadedFiles = req.files as Express.MulterS3.File[];
+			// Ensuring correct type when handling req.files
+			// Cast req.files as an object with string keys and file array values
+			const uploadedFiles = Object.values(
+				(req.files ?? {}) as {
+					[field: string]: Express.MulterS3.File[];
+				}
+			).flat() as Express.MulterS3.File[];
 
+			// Validate and map file to Image type
 			const certificateFile = uploadedFiles.find(
 				(file) => file.fieldname === 'certificate'
 			);
@@ -305,7 +312,7 @@ export default class sellerController {
 				  }
 				: Prisma.JsonNull;
 
-			const images = uploadedFiles
+			const images: Image[] = uploadedFiles
 				.filter((file) => file.fieldname !== 'certificate')
 				.map((file) => ({
 					key: file.key,
@@ -335,15 +342,16 @@ export default class sellerController {
 			});
 
 			const vetResponse: string = await vetProduct(product);
+			console.log(vetResponse);
 
 			const scoreMatch = vetResponse.match(
-				/Sustainability Score.*?:\s*(\d{1,3})/
+				/Sustainability Score:\s*(\d{1,3})/ // Matches the score, considering potential leading spaces
 			);
 			const tagMatch = vetResponse.match(
-				/Sustainability Tag.*?:\s*(.+?)\n/
+				/Sustainability Tag:\s*(\S+.*?)(\n|$)/ // Matches the tag, allowing non-space characters followed by the line break or end of input
 			);
 			const explanationMatch = vetResponse.match(
-				/Explanation.*?:\s*([\s\S]+)/
+				/Explanation:\s*([\s\S]+?)\n+/ // Captures the explanation, allowing newlines and spaces
 			);
 
 			const sustainabilityScore = scoreMatch
@@ -355,7 +363,9 @@ export default class sellerController {
 				: null;
 
 			let message;
-			let approvalStatus: ApprovalStatus;
+			let approvalStatus: ApprovalStatus = 'PENDING';
+			let certificateExists = false;
+			let embedding;
 
 			if (sustainabilityScore === '0') {
 				message =
@@ -382,11 +392,10 @@ export default class sellerController {
 					approvalStatus,
 				};
 
-				const embedding = generateProductEmbedding(product);
+				embedding = await generateProductEmbedding(product);
 
-				let certificate;
-				if (certificate) {
-					certificate = true; // for frontend
+				if (certificateFile) {
+					certificateExists = true; // for frontend
 					approvalStatus = 'PENDING';
 					message =
 						"Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
@@ -398,30 +407,32 @@ export default class sellerController {
 						product
 					);
 				}
-
-				await prisma.$executeRawUnsafe(
-					`
-					UPDATE "products"
-					SET 
-						"embedding" = $1,
-						"sustainability_score" = $2,
-						"sustainability_score_reason" = $3,
-						"sustainability_tag" = $4,
-						"approval_status" = $5
-					WHERE "id" = $6
-					`,
-					embedding,
-					sustainabilityScore,
-					sustainabilityScoreReason,
-					sustainabilityTag,
-					approvalStatus,
-					product.id
-				);
 			}
+
+			console.log(sustainabilityScore, sustainabilityScoreReason, sustainabilityTag)
+
+			await prisma.$executeRawUnsafe(
+				`
+			UPDATE "products"
+			SET "embedding" = $1,
+				"sustainability_score" = $2,
+				"sustainability_score_reason" = $3,
+				"sustainability_tag" = $4,
+				"approval_status" = $5::"ApprovalStatus"
+			WHERE "id" = $6
+		  `,
+				embedding,
+				sustainabilityScore,
+				sustainabilityScoreReason,
+				sustainabilityTag,
+				approvalStatus,
+				product.id
+			);
 
 			res.status(200).json({
 				status: 'success',
 				message,
+				certificateExists,
 				data: product,
 			});
 		} catch (error) {
