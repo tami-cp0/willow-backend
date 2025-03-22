@@ -238,7 +238,7 @@ export default class customerController {
 			const likedProducts = await prisma.likedProduct.findMany({
 				where: { customerId: userId },
 				include: { product: { include: { seller: true } } },
-				orderBy: { updatedAt: 'desc' },
+				orderBy: { createdAt: 'desc' },
 			});
 
 			res.status(200).json({
@@ -417,12 +417,15 @@ export default class customerController {
 				);
 			}
 
+			let weight: number = rating * 2;
+
 			const review = await prisma.review.create({
 				data: {
 					productId,
 					customerId: userId,
 					rating,
 					comment,
+					weight
 				},
 			});
 
@@ -606,6 +609,111 @@ export default class customerController {
 			});
 		} catch (error) {
 			next(error);
+		}
+	}
+
+	weighSumAndNormalize(vectors: {embedding: number[], weight: number}[]) {
+		const weightedSumEmbedding = new Array(vectors[0].embedding.length).fill(0);
+		let totalWeight: number = 0;
+	  
+		// Calculate the weighted sum of embeddings
+		for (const vector of vectors) {
+			vector.embedding.forEach((value, index) => {
+				weightedSumEmbedding[index] += value * vector.weight;  // Accumulate weighted values
+			});
+			totalWeight += vector.weight;
+		}
+	  
+		// Divide by total weight to get the weighted average
+		weightedSumEmbedding.forEach((value, index, array) => {
+			array[index] = value / totalWeight;
+		});
+	
+		// L2 normalization (magnitude calculation)
+		const magnitude = Math.sqrt(weightedSumEmbedding.reduce((sum, val) => sum + val * val, 0));
+	
+		// Return the normalized vector
+		return weightedSumEmbedding.map(val => val / magnitude);
+	}
+	
+	
+
+	static async getRecommendations(req: Request, res: Response, next: NextFunction) {
+		try {
+			// use half life formula to check how decay rate drops influence over time
+			const decayRate: Record<string, number> = {
+				likes: 0.005,
+				viewed: 0.02,
+				rating: 0.002,
+				order: 0.01
+			}
+
+			const hasInteractions: { exists: boolean }[] = await prisma.$queryRaw`
+				SELECT EXISTS (
+					SELECT 1 FROM liked_products WHERE customer_id = ${req.user.id}
+					UNION 
+					SELECT 1 FROM last_viewed WHERE customer_id = ${req.user.id}
+				) AS exists;
+			`;
+
+			const userHasInteractions = hasInteractions[0].exists;
+
+			let result: {embedding: number[], weight: number}[] | number;
+
+			if (!hasInteractions[0].exists) {
+				result = await prisma.$executeRaw`
+					WITH selected_products AS (
+						SELECT id FROM products
+						ORDER BY random()
+						LIMIT 5
+					)
+					INSERT INTO recommendations (product_id, customer_id)
+					SELECT id, ${req.user.id} FROM selected_products
+					WHERE (SELECT COUNT(*) FROM selected_products) = 5;
+				`;
+			} else {
+				result = await prisma.$queryRaw`
+					SELECT embedding, (weight * EXP(-0.005 * EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400)) AS weight
+					FROM liked_products
+
+					UNION ALL
+
+					SELECT embedding, (weight * EXP(-0.02 * EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400)) AS weight
+					FROM last_viewed
+
+					UNION ALL
+
+					SELECT p.embedding, (r.weight * EXP(-0.002 * EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400)) AS weight
+					FROM reviews r
+					JOIN products p ON r.product_id = p.id
+
+					UNION ALL
+
+					SELECT p.embedding, (o.weight * EXP(-0.01 * EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400)) AS weight
+					FROM orders o
+					JOIN transactions t ON o.id = t.order_id
+					JOIN order_items ot ON o.id = ot.order_id
+					JOIN products p ON ot.product_id = p.id
+					WHERE t.status = 'SUCCESS';
+				`;
+			}
+
+			let recommendations
+
+			if (typeof result === "number") {
+				recommendations = await prisma.recommendation.findMany({
+					where: {
+						customerId: req.user.id
+					}
+				});
+			} else {
+				
+
+			}
+
+
+		} catch (error) {
+			
 		}
 	}
 }
