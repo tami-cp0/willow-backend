@@ -6,6 +6,7 @@ import https from 'https';
 import { PrismaClient } from '@prisma/client';
 import expressWs from 'express-ws';
 import 'reflect-metadata';
+import cron from 'node-cron';
 import router from './routes';
 import cache from './utils/cache';
 import createChatRouter from './routes/chat';
@@ -49,8 +50,22 @@ const RED = '\x1b[31m%s\x1b[0m';
 
 async function startServer() {
 	try {
-		await prisma.$connect();
-		console.log('Prisma connected successfully.');
+		const MAX_RETRIES = 5
+		let retries = 0;
+
+		while (retries < MAX_RETRIES) {
+			try {
+				await prisma.$connect();
+				console.log('Prisma connected successfully.');
+				break;
+			} catch (error) {
+				if (retries === MAX_RETRIES - 1) { throw error; }
+				retries++;
+				console.log(`Database Connection Retry ${retries}`);
+				// wait for one second
+				await new Promise(resolve => setTimeout(resolve, 1000));
+			}
+		}
 
 		app.listen(port, host, () => {
 			console.log(GREEN, `Server live on http://${host}:${port}`);
@@ -63,7 +78,7 @@ async function startServer() {
 }
 
 // to keep render and redis alive
-setInterval(async () => {
+cron.schedule('*/15 * * * *', async () => {
     if (backendURL) {
         https.get(`${backendURL}/api/v1/ping`).on('error', (error) => {
             console.error('Error pinging server:', error);
@@ -71,8 +86,12 @@ setInterval(async () => {
     }
 
     if (cache.connected) {
-        await cache.client.set('keep-alive-key', 'keep-alive-value', { EX: 15 * 60 });
+        try {
+            await cache.client.set('keep-alive-key', 'keep-alive-value', { EX: 15 * 60 });
+        } catch (error) {
+            console.error('Error setting keep-alive cache:', error);
+        }
     }
-},  15 * 60 * 1000); // 15 minutes
+});
 
 startServer();
