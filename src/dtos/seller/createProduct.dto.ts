@@ -28,7 +28,7 @@ class CreateProductDto {
   category!: string;
 
   @IsOptional()
-  options!: object;
+  options?: object;
 
   @IsNotEmpty({ message: 'Price is required' })
   @IsNumber({}, { message: 'Price must be a number' })
@@ -53,7 +53,7 @@ class CreateProductDto {
 }
 
 async function validateCreateProductDto(req: Request): Promise<void> {
-  if (req.user.id !== req.body.sellerId) {
+  if (req.user.id !== req.params.userId) {
     throw new ErrorHandler(403, 'Access denied');
   }
 
@@ -61,8 +61,15 @@ async function validateCreateProductDto(req: Request): Promise<void> {
     throw new ErrorHandler(400, 'Product Images are required');
   }
 
-  const combinedDEata = { ...req.body, userId: req.params.userId };
-  const dtoInstance = plainToInstance(CreateProductDto, combinedDEata);
+  req.body.onDemand = JSON.parse(req.body.onDemand);
+  req.body.price = JSON.parse(req.body.price);
+  req.body.sustainabilityFeatures = JSON.parse(req.body.sustainabilityFeatures);
+
+  const combinedData = {
+    ...req.body,
+    userId: req.params.userId
+  };
+  const dtoInstance = plainToInstance(CreateProductDto, combinedData);
   const errors = await validate(dtoInstance);
 
   if (errors.length > 0) {
