@@ -20,7 +20,7 @@ import validateGetConversationWithMessagesDto from '../dtos/customer/getConversa
 import validateGetAIChatDto from '../dtos/customer/getAIChat.dto';
 import validatePostAIChatDto from '../dtos/customer/postAIChat.dto';
 import processUserQuery from '../utils/queryAI';
-import { Prisma, Recommendation } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import getNormalizedWeightedSum from '../utils/normalizeVector';
 
 type Image = {
@@ -204,7 +204,7 @@ export default class customerController {
 			const { userId, productId } = req.params;
 
 			const product = await prisma.product.findUnique({
-				where: { id: productId },
+				where: { id: productId, approvalStatus: 'APPROVED' },
 			});
 			if (!product) {
 				throw new ErrorHandler(404, 'Product not found');
@@ -632,6 +632,7 @@ export default class customerController {
 				result = await prisma.$executeRaw`
 					WITH selected_products AS (
 						SELECT id FROM products
+						WHERE approval_status = 'APPROVED'::ApprovalStatus
 						ORDER BY random()
 						LIMIT 5
 					)
@@ -695,6 +696,7 @@ export default class customerController {
 							*,
 							1 - (embedding <=> ${Prisma.sql`${normalizedEmbeddingString}`}) as similarity
 							FROM products
+							WHERE approval_status = 'APPROVED'::ApprovalStatus
 							ORDER BY similarity DESC
 							LIMIT 5
 						)
@@ -706,6 +708,29 @@ export default class customerController {
 			}
 		} catch (error) {
 			throw new ErrorHandler(500, "Recommendations computation error");
+		}
+	}
+
+	// No DTO.
+	static async getRecommendations(req: Request, res: Response, next: NextFunction) {
+		try {
+			const userId = req.user.id;
+
+			const recommendations = await prisma.recommendation.findMany({
+				where: {
+					customerId: userId
+				},
+				include: {
+					product: true
+				}
+			});
+
+			res.status(200).json({
+				status: "success",
+				data: recommendations
+			});
+		} catch (error) {
+			next(error);
 		}
 	}
 }
