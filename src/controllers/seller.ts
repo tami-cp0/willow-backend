@@ -282,7 +282,7 @@ export default class sellerController {
 			const products = await prisma.$queryRaw`
 				SELECT *, (embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`}) AS similarity
 				FROM products
-				WHERE approval_status = ${Prisma.sql`${approvalStatus}`}::ApprovalStatus
+				WHERE approval_status = ${Prisma.sql`${approvalStatus}`}::"ApprovalStatus"
 				ORDER BY embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`} ASC
 				LIMIT ${Prisma.sql`${limit}`} OFFSET ${Prisma.sql`${offset}`};
 			`;
@@ -290,7 +290,7 @@ export default class sellerController {
 			const total = await prisma.$queryRaw`
 				SELECT COUNT(*)::int AS total
 				FROM products
-				WHERE approval_status = ${Prisma.sql`${approvalStatus}`}::ApprovalStatus;
+				WHERE approval_status = ${Prisma.sql`${approvalStatus}`}::"ApprovalStatus";
 			` as any;
 	
 			res.status(200).json({

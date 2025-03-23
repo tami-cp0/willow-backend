@@ -632,12 +632,12 @@ export default class customerController {
 				result = await prisma.$executeRaw`
 					WITH selected_products AS (
 						SELECT id FROM products
-						WHERE approval_status = 'APPROVED'::ApprovalStatus
+						WHERE approval_status = 'APPROVED'::"ApprovalStatus"
 						ORDER BY random()
 						LIMIT 5
 					)
 					INSERT INTO recommendations (product_id, customer_id, updated_at)
-					SELECT id, ${userId}, NOW() FROM selected_products
+					SELECT id, ${Prisma.sql`${userId}`}, NOW() FROM selected_products
 					WHERE (SELECT COUNT(*) FROM selected_products) = 5;
 				`;
 			} else {
@@ -688,20 +688,20 @@ export default class customerController {
 			if (typeof result !== "number") {
 				if (result.length !== 0) {
 					const normalizedEmbedding = getNormalizedWeightedSum(result);
-					const normalizedEmbeddingString = `[${normalizedEmbedding.join(",")}]`;
+					const normalizedEmbeddingArray = Prisma.sql`ARRAY[${Prisma.join(normalizedEmbedding)}]::vector`;
 
 					await prisma.$queryRaw`
 						WITH similar_products AS (
 							SELECT
-							*,
-							1 - (embedding <=> ${Prisma.sql`${normalizedEmbeddingString}`}) as similarity
+								*,
+								1 - (embedding <=> ${normalizedEmbeddingArray}) AS similarity
 							FROM products
-							WHERE approval_status = 'APPROVED'::ApprovalStatus
+							WHERE approval_status = 'APPROVED'::"ApprovalStatus"
 							ORDER BY similarity DESC
 							LIMIT 5
 						)
 						INSERT INTO recommendations (product_id, customer_id, updated_at)
-						SELECT id, ${userId}, NOW() FROM similar_products
+						SELECT id, ${Prisma.sql`${userId}`}, NOW() FROM similar_products
 						WHERE (SELECT COUNT(*) FROM similar_products) = 5;
 					`;
 				}
