@@ -138,7 +138,7 @@ export default class authController {
             // logout user from other sessions.
             await Promise.all([
                 prisma.user.update({
-                    where: { id: req.user.id },
+                    where: { id: user.id },
                     data: { refreshToken: null }
                 }),
                 cache.removeUser(user.id)
