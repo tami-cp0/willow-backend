@@ -694,10 +694,10 @@ export default class customerController {
 						WITH similar_products AS (
 							SELECT
 								*,
-								1 - (embedding <=> ${normalizedEmbeddingArray}) AS similarity
+								(embedding <=> ${normalizedEmbeddingArray}) AS similarity
 							FROM products
 							WHERE approval_status = 'APPROVED'::"ApprovalStatus"
-							ORDER BY similarity DESC
+							ORDER BY similarity ASC
 							LIMIT 5
 						)
 						INSERT INTO recommendations (product_id, customer_id, updated_at)
