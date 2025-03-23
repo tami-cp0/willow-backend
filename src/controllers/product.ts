@@ -54,45 +54,41 @@ export default class productController {
 	// NO DTO
 	static async searchProducts(req: Request, res: Response, next: NextFunction) {
         const text = req.query.text as string;
-        const userId = req.query.userId;
         const page = Number(req.query.page as string) || 1;
         const limit = Number(req.query.limit as string) || 20;
         const offset = (page - 1) * limit;
     
         if (!text) return next(new ErrorHandler(400, 'text is missing'));
-        if (!userId) return next(new ErrorHandler(400, 'userId is missing'));
     
         try {
             const embedding = await generateProductEmbedding(undefined, text);
     
-            const products = await prisma.$queryRaw`
-                SELECT *, (embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`}) AS similarity
-                FROM products
-                WHERE approval_status = 'APPROVED'::"ApprovalStatus"
-                ORDER BY embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`} ASC
-                LIMIT ${limit} OFFSET ${offset};
-            `;
+            const embeddingVector = Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`;
     
-            const total = await prisma.$queryRaw`
-                SELECT COUNT(*)::int AS total
-                FROM products
-                WHERE approval_status = 'APPROVED'::"ApprovalStatus";
-            ` as any;
+            const products = await prisma.$queryRaw`
+                SELECT *, similarity
+                FROM (
+                    SELECT *, (embedding <=> ${embeddingVector}) AS similarity
+                    FROM products
+                    WHERE approval_status = 'APPROVED'::"ApprovalStatus"
+                ) sub
+                ORDER BY similarity ASC
+                LIMIT ${Prisma.sql`${limit}`}
+                OFFSET ${Prisma.sql`${offset}`};
+            `;
     
             res.status(200).json({
                 status: 'success',
                 data: products,
                 pagination: {
-                    total: total[0].total,
                     page,
                     limit,
-                    totalPages: Math.ceil(total[0].total / limit),
                 },
             });
         } catch (error) {
             next(error);
         }
-    }
+    }    
 
 	static async getSingleProduct(
 		req: Request,
