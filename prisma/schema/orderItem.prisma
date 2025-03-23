@@ -20,6 +20,8 @@ model OrderItem {
   productId           String                  @map("product_id")
   seller              Seller                  @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
   sellerId            String                  @map("seller_id")
+  createdAt       DateTime   @default(now()) @map("created_at")
+
   
   customerStatus      CustomerOrderItemStatus @default(ORDERED) @map("customer_status")
   sellerStatus        SellerOrderItemStatus   @default(NEW) @map("seller_status")
