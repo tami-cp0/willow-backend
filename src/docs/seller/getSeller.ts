@@ -10,8 +10,6 @@
  *       This endpoint requires cookie-based authentication.
  *     tags:
  *       - Sellers
- *     security:
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: userId

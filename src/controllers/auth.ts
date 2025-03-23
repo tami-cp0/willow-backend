@@ -13,10 +13,11 @@ import validateLoginDto from "../dtos/auth/login.dto";
 import { User } from "@prisma/client";
 import validateForgotPasswordDto from "../dtos/auth/forgotPassword.dto";
 import validateResetPasswordDto from "../dtos/auth/resetPassword.dto";
+import { deleteJob, getJob, scheduleRecommendationUpdates } from "../utils/scheduleRecommendationsUpdates";
 
 config();
 
-class authController {
+export default class authController {
     static async verifyAccount(req: Request, res: Response, next: NextFunction) {
         try {
             await validateVerifyAccountDto(req);
@@ -64,6 +65,14 @@ class authController {
                     data: { refreshToken: refreshToken },
                 })
             ]);
+
+            let job = getJob(user.id);
+            if (job) {
+                job.start()
+            } else {
+                job = await scheduleRecommendationUpdates(user.id);
+                job.start()
+            }
 
             res.cookie('accessToken', accessToken, {
                 maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -124,6 +133,17 @@ class authController {
                 },
             }) as User;
 
+            if (!user.isVerified) return next(new ErrorHandler(403, "Account is not verified"));
+
+            // logout user from other sessions.
+            await Promise.all([
+                prisma.user.update({
+                    where: { id: req.user.id },
+                    data: { refreshToken: null }
+                }),
+                cache.removeUser(user.id)
+            ]);
+
             const payload: CustomJwtPayload = {
                 id: user.id, role: user.role
             };
@@ -155,6 +175,14 @@ class authController {
                     data
                 })
             ]);
+
+            let job = getJob(user.id);
+            if (job) {
+                job.start()
+            } else {
+                job = await scheduleRecommendationUpdates(user.id);
+                job.start()
+            }
 
             res.cookie('accessToken', accessToken, {
                 maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -194,6 +222,12 @@ class authController {
                 }),
                 cache.removeUser(req.user.id)
             ]);
+
+            const job = getJob(req.user.id);
+            if (job) {
+                job.stop();
+                deleteJob(req.user.id);
+            }
     
             res.status(204).end();
         } catch (error) {
@@ -308,5 +342,3 @@ class authController {
 		}
 	}
 }
-
-export default authController;

@@ -1,23 +1,19 @@
+// removed PENDING, RETURNED, REFUNDED, CANCELLED temporarily
 enum CustomerOrderItemStatus {
-  PENDING
   ORDERED
   SHIPPED
-  RETURNED
-  REFUNDED
   DELIVERED
 }
 
+// removed PROCESSING, REFUNDED, CANCELLED temporarily
 enum SellerOrderItemStatus {
   NEW
-  PROCESSING
   SHIPPED
   DELIVERED
-  CANCELLED
-  REFUNDED
 }
 
 model OrderItem {
-  id                  String                  @id @default(ulid())
+  id                  String                  @id @default(nanoid(12)) // temporary
   order               Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId             String                  @map("order_id")
   product             Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -25,7 +21,7 @@ model OrderItem {
   seller              Seller                  @relation(fields: [sellerId], references: [userId], onDelete: Cascade)
   sellerId            String                  @map("seller_id")
   
-  customerStatus      CustomerOrderItemStatus @default(PENDING) @map("customer_status")
+  customerStatus      CustomerOrderItemStatus @default(ORDERED) @map("customer_status")
   sellerStatus        SellerOrderItemStatus   @default(NEW) @map("seller_status")
 
   customerReturnMessage String?    @map("customer_return_message")

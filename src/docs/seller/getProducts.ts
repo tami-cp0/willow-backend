@@ -5,12 +5,10 @@
  *     summary: Get seller's products - paginated
  *     description: >
  *       Retrieves a paginated list of products offered by the specified seller.
- *       Optional query parameters can filter products by approval status (PENDING, APPROVED, REJECTED).
+ *       Optional query parameters can filter products by approval status (PENDING, APPROVED, REJECTED, OUT_OF_STOCK).
  *       This endpoint requires cookie-based authentication.
  *     tags:
  *       - Sellers
- *     security:
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: userId

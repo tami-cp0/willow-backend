@@ -5,13 +5,13 @@ enum AIChatStatus {
 
 model AIChat {
   id          String     @id @default(ulid())
-  customer    Customer   @relation(fields: [customerId], references: [userId], onDelete: Cascade)
-  customerId  String     @map("customer_id")
+  customer    Customer   @relation(fields: [customerId], references: [userId])
+  customerId  String     @map("customer_id") @unique
   status      AIChatStatus @default(OPEN)
+  history     Json[]      @default([])
+  isFlagged   Boolean     @default(false) @map("is_flagged")
   updatedAt   DateTime   @updatedAt
   createdAt   DateTime   @default(now()) @map("created_at")
-
-  messages    ChatMessage[]
 
   @@map("ai_chats")
 }

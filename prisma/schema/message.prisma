@@ -1,14 +1,14 @@
 model Message {
   id              String     @id @default(ulid())
   conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  conversationId  String
+  conversationId  String     @map("conversation_id")
 //   sender          User       @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   senderId        String     @map("sender_id")
 //   receiver        User       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
   receiverId      String     @map("receiver_id")
   content         String
   images          Json?
-  isReported      Boolean    @default(false)
+  isReported      Boolean    @default(false) @map("is_reported")
   createdAt       DateTime   @default(now()) @map("created_at")
 
   @@map("messages")

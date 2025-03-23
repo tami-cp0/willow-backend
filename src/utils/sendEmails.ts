@@ -1,11 +1,14 @@
-import nodemailer from "nodemailer";
-import { config } from "dotenv";
-import cache from "./cache";
-import { ErrorHandler } from "./errorHandler";
+import nodemailer from 'nodemailer';
+import { config } from 'dotenv';
+import cache from './cache';
+import { ErrorHandler } from './errorHandler';
+import { Product } from '@prisma/client';
 
 config();
 
-const otpEmailTemplate = ['Acconut verification', `
+const otpEmailTemplate = [
+	'Acconut verification',
+	`
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,9 +30,12 @@ const otpEmailTemplate = ['Acconut verification', `
         <div class="footer">&copy; 2025 Willow</div>
     </div>
 </body>
-</html>`]
+</html>`,
+];
 
-const passwordResetEmailTemplate = ['Password Reset', `
+const passwordResetEmailTemplate = [
+	'Password Reset',
+	`
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -52,9 +58,12 @@ const passwordResetEmailTemplate = ['Password Reset', `
         <div class="footer">&copy; 2025 Willow</div>
     </div>
 </body>
-</html>`]
+</html>`,
+];
 
-const newLoginLocationEmailTemplate = ['New Login Location Detected', `
+const newLoginLocationEmailTemplate = [
+	'New Login Location Detected',
+	`
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -80,68 +89,161 @@ const newLoginLocationEmailTemplate = ['New Login Location Detected', `
             <div class="footer">&copy; 2025 Willow</div>
         </div>
     </body>
-    </html>`]
-    
+    </html>`,
+];
+
+const newProductSubmissionWithCertificateEmailTemplate = [
+	'New Product Submission with Certificate',
+	`
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>New Product Submission with Certificate</title>
+              <style>
+                  body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+                  .container { max-width: 600px; background: #fff; padding: 20px; margin: 0 auto; border-radius: 5px; }
+                  .details { background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+                  .footer { font-size: 12px; color: #777; text-align: center; margin-top: 20px; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h2>New Product Submission with Certificate</h2>
+                  <p>A new product submission has been received with an attached sustainability certificate.</p>
+                  <div class="details">
+                      <p><strong>Product id:</strong> <product_id></p>
+                      <p><strong>Seller Email:</strong> <seller_email></p>
+                      <p><strong>Submission Date:</strong> ${new Date()}</p>
+                  </div>
+                  <p>Please review the certificate for validation within the next <strong>24–48 hours</strong>.</p>
+                  <div class="footer">&copy; 2025 Willow</div>
+              </div>
+          </body>
+          </html>`,
+];
+
+const paymentSuccessEmailTemplate = [
+	'Payment Successful',
+	`
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+      .container { max-width: 600px; background: #fff; padding: 20px; margin: 0 auto; border-radius: 5px; }
+      .details { background: #eee; padding: 10px; border-radius: 5px; margin: 10px 0; }
+      .footer { font-size: 12px; color: #777; text-align: center; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Payment Successful</h2>
+      <p>Dear Customer,</p>
+      <p>Your payment for Order <strong><order_id></strong> has been successfully processed.</p>
+      <div class="details">
+        <p><strong>Transaction Reference:</strong> <transaction_reference></p>
+        <p><strong>Amount:</strong> NGN <amount></p>
+      </div>
+      <p>Thank you for shopping with Willow, your eco-friendly e-commerce platform that champions sustainable choices.</p>
+      <p>If you have any questions or need assistance, please contact our support team.</p>
+      <div class="footer">&copy; 2025 Willow</div>
+    </div>
+  </body>
+  </html>
+    `,
+];
 
 const generateOTP = (length = 6): string => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+	return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-export async function sendEmail(type: 'login_location' | 'password_reset' | 'otp', email: string, ip?: string, resetToken?: string) {
-    try {
-        let html: string[] = otpEmailTemplate; // default
+// temporarily add product parameter for temporary certificate email
+export async function sendEmail(
+	type: 'login_location' | 'password_reset' | 'otp' | 'certificate' | 'payment',
+	email: string,
+	ip?: string,
+	resetToken?: string,
+	product?: Product | null,
+    payment?: { orderId?: string, transferRef?: string, amount: number }
+) {
+	try {
+		let html: string[] = otpEmailTemplate; // default
 
-        if (type === 'otp') {
-            const otp = generateOTP();
+		if (type === 'otp') {
+			const otp = generateOTP();
 
-            cache.saveOTP(email, otp);
-            html[1] = otpEmailTemplate[1].replace('<otp_code>', otp);
-        } else if (type === 'login_location') {
-            if (!ip) {
-                console.error('IP is missing for login location');
-                throw new ErrorHandler(500, 'Internal server error');
-            }
-            try {
-                const res = await fetch(`http://ip-api.com/json/${ip}`);
-                if (!res.ok) {
-                    console.error('Failed to fetch IP location:');
-                    throw new ErrorHandler(500, 'Failed to get IP location');
-                }
-                const data = await res.json();
-                html = newLoginLocationEmailTemplate;
-                html[1] = html[1]
-                    .replace('<location>', `${data.country}, ${data.regionName}, ${data.city}.`)
-                    .replace('<ip_address>', ip);
-            } catch (error) {
-                console.error('Error fetching IP location:', error);
-                throw new ErrorHandler(500, 'Failed to fetch IP location');
-            }
-        } else if (type === 'password_reset') {
-            if (!resetToken) {
-                console.error('resetToken is required - password reset')
-                throw new ErrorHandler(500, 'Internal server error')
-            }
+			cache.saveOTP(email, otp);
+			html[1] = otpEmailTemplate[1].replace('<otp_code>', otp);
+		} else if (type === 'login_location') {
+			if (!ip) {
+				console.error('IP is missing for login location');
+				throw new ErrorHandler(500, 'Internal server error');
+			}
+			try {
+				const res = await fetch(`http://ip-api.com/json/${ip}`);
+				if (!res.ok) {
+					console.error('Failed to fetch IP location:');
+					throw new ErrorHandler(500, 'Failed to get IP location');
+				}
+				const data = await res.json();
+				html = newLoginLocationEmailTemplate;
+				html[1] = html[1]
+					.replace(
+						'<location>',
+						`${data.country}, ${data.regionName}, ${data.city}.`
+					)
+					.replace('<ip_address>', ip);
+			} catch (error) {
+				console.error('Error fetching IP location:', error);
+				throw new ErrorHandler(500, 'Failed to fetch IP location');
+			}
+		} else if (type === 'password_reset') {
+			if (!resetToken) {
+				console.error('resetToken is required - password reset');
+				throw new ErrorHandler(500, 'Internal server error');
+			}
 
-            html = passwordResetEmailTemplate;
-            html[1] = html[1].replace('<reset_token>', resetToken);
-        }
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-            user: process.env.EMAIL,
-            pass: process.env.EMAIL_APP_PASSWORD,
-            },
-        });
-        
-        transporter.sendMail({
-            from: process.env.EMAIL,
-            to: email,
-            subject: html[0],
-            html: html[1]
-        }).catch(error => {
-            console.error('Failed to send email:', error);
-        });   
-    } catch (error) {
-        return error;
-    }
+			html = passwordResetEmailTemplate;
+			html[1] = html[1].replace('<reset_token>', resetToken);
+		} else if (type === 'certificate') {
+			html = newProductSubmissionWithCertificateEmailTemplate;
+			html[1] = html[1]
+				.replace('<product_id>', product!.id)
+				.replace('<seller_email>', email);
+
+			// temporarily send to my email
+			email = 'findtamilore@gmail.com';
+		} else if (type === 'payment') {
+			html = paymentSuccessEmailTemplate
+            const {transferRef, orderId, amount} = payment || {};
+			html[1] = html[1]
+				.replace('<transaction_reference>', transferRef as string)
+				.replace('<order_id>', orderId as string)
+				.replace('<amount>', (amount as number).toString());
+		}
+
+		const transporter = nodemailer.createTransport({
+			service: 'gmail',
+			auth: {
+				user: process.env.EMAIL,
+				pass: process.env.EMAIL_APP_PASSWORD,
+			},
+		});
+
+		transporter
+			.sendMail({
+				from: process.env.EMAIL,
+				to: email,
+				subject: html[0],
+				html: html[1],
+			})
+			.catch((error) => {
+				console.error('Failed to send email:', error);
+			});
+	} catch (error) {
+		throw error;
+	}
 }

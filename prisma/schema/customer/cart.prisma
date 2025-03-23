@@ -4,7 +4,6 @@ model Cart {
   customerId  String     @id @map("customer_id")
 
   createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
 
   cartItems   CartItem[]
 
@@ -17,7 +16,8 @@ model CartItem {
   cartId     String   @map("cart_id")
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId  String   @map("product_id")
-  quantity   Int      
+  quantity   Int  
+  weight     Float?    
 
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")

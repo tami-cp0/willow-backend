@@ -7,33 +7,26 @@
  *       Creates a new product for the authenticated seller. The request must be sent as multipart/form-data and include:
  *       
  *       **File fields:**
- *          - **images** (required): An array of product image files (at least one, up to five).
+ *       - **images** (required): An array of product image files (at least one, up to five).
+ *       - **certificate** (optional): A file upload for product certification. If provided, its details will be stored under the
+ *         **certification** object.
  *       
- *       **Request Body fields:**
- *          - **name** (string, required): Product name (1-50 characters).
- *          - **bucketName** - "products"
- *          - **description** (string, required): Product description (1-255 characters).
- *          - **inStock** (number, required if onDemand is false): Available stock quantity.
- *          - **onDemand** (boolean, required): Indicates if the product is produced on demand.
- *          - **category** (string, required): Product category.
- *          - **options** (object, optional): Customizable options (e.g., color, size).
- *          - **price** (number, required): Product price.
- *          - **sustainabilityFeatures** (array, required): Sustainability features.
- *          - **packaging** (string, required): Packaging type.
- *              - Allowed values: PLASTIC_FREE, BIODEGRADABLE, RECYCLED_PAPER, REUSABLE, COMPOSTABLE, MINIMAL, GLASS, METAL, PLASTIC, ECO_FRIENDLY_FOAMS, ALUMINUM, BAMBOO, CORRUGATED_CARDBOARD, PAPERBOARD.
- *          - **sourcing** (string, required): Product sourcing.
- *              - Allowed values: LOCALLY_SOURCED, INTERNATIONALLY_SOURCED.
- *          - **endOfLifeInfo** (string, optional): Disposal or recycling instructions.
- *          - **certification** (object, optional): An object containing certification details.
- *              - **certificate** (file, optional): Certification file.
- *              - **certifiedBy** (string, optional): Certifying authority.
+ *       **Dropdown && fields to NOTE:**
+ *       - **sustainabilityFeatures** (array, required): An array of sustainability features.
+ *         Allowed values: BIODEGRADABLE, COMPOSTABLE, REUSABLE, RECYCLED_MATERIALS, WATER_EFFICIENT, SOLAR_POWERED, MINIMAL_CARBON_FOOTPRINT, ENERGY_EFFICIENT, ZERO_WASTE, PLASTIC_FREE, REPAIRABLE_DESIGN, UPCYCLED, CARBON_OFFSET, ORGANIC_MATERIALS, FAIR_TRADE, VEGAN, NON_TOXIC, REGENERATIVE_AGRICULTURE, SLOW_PRODUCTION, WASTE_REDUCING_DESIGN, CIRCULAR_DESIGN, WILDLIFE_FRIENDLY.
+ *       - **packaging** (string, required): Packaging type.
+ *         Allowed values: PLASTIC_FREE, BIODEGRADABLE, RECYCLED_PAPER, REUSABLE, COMPOSTABLE, MINIMAL, GLASS, METAL, PLASTIC, ECO_FRIENDLY_FOAMS, ALUMINUM, BAMBOO, CORRUGATED_CARDBOARD, PAPERBOARD.
+ *       - **sourcing** (string, required): Product sourcing.
+ *         Allowed values: LOCALLY_SOURCED, INTERNATIONALLY_SOURCED.
+ *       - **certification** (object, optional): An object containing certification details.
+ *           - **certificate** (file, optional): The certification file.
+ *           - **certifiedBy** (string, optional): The certifying authority.
  *       
- *       **Note:** The seller's userId is provided as a path parameter and should not be included in the request body.
+ *       **Note:** The seller's user ID is provided as a path parameter and should not be included in the request body.
  *       
- *       **footnote:** After creation, the product is vetted for sustainability. Depending on the result:
- *          - If the sustainability vetting is inconclusive (i.e. sustainabilityScoreReason is "Inconclusive"), a success message is returned inviting the seller to apply for extended vetting.
- *          - Otherwise, the product is updated with sustainabilityScore, sustainabilityScoreReason, sustainabilityTag, and approvalStatus 
- *       (APPROVED if sustainabilityScore ≥ 50; otherwise REJECTED), and the updated product data is returned.
+ *       After product creation, a sustainability vetting process is executed. Depending on the result, the system
+ *       updates the product with sustainabilityScore, sustainabilityScoreReason, sustainabilityTag, and approvalStatus.
+ *       A response message is then returned indicating whether the product is approved, rejected, or if extended vetting is required.
  *     tags:
  *       - Sellers
  *     security:
@@ -58,29 +51,21 @@
  *                   type: string
  *                   format: binary
  *                 description: Product images (required, at least one, up to five).
- *               certification:
- *                 type: object
- *                 description: Optional certification details.
- *                 properties:
- *                   certificate:
- *                     type: string
- *                     format: binary
- *                     description: Certification file.
- *                   certifiedBy:
- *                     type: string
- *                     description: Certifying authority.
- *                     example: "EcoCert"
+ *               certificate:
+ *                 type: string
+ *                 format: binary
+ *                 description: Optional certification file. Its details will be stored within the **certification** object.
+ *               certifiedBy:
+ *                 type: string
+ *                 description: Optional certifying authority.
+ *                 example: "EcoCert"
  *               name:
  *                 type: string
  *                 description: Product name (1-50 characters).
  *                 example: "Eco-Friendly Water Bottle"
- *               bucketName:
- *                 type: string
- *                 description: name of the bucket to upload to
- *                 example: products
  *               description:
  *                 type: string
- *                 description: Product description (1-255 characters).
+ *                 description: Product description (1-1000 characters).
  *                 example: "A sustainable water bottle made from recycled materials."
  *               inStock:
  *                 type: number
@@ -106,7 +91,7 @@
  *                 type: array
  *                 items:
  *                   type: string
- *                   enum: [BIODEGRADABLE, COMPOSTABLE, REUSABLE, RECYCLED_MATERIALS, LOCALLY_SOURCED, WATER_EFFICIENT, SOLAR_POWERED, MINIMAL_CARBON_FOOTPRINT, ENERGY_EFFICIENT, ZERO_WASTE, PLASTIC_FREE, REPAIRABLE_DESIGN, UPCYCLED, CARBON_OFFSET, ORGANIC_MATERIALS, FAIR_TRADE, VEGAN, NON_TOXIC, REGENERATIVE_AGRICULTURE, SLOW_PRODUCTION, WASTE_REDUCING_DESIGN, CIRCULAR_DESIGN, WILDLIFE_FRIENDLY]
+ *                   enum: [BIODEGRADABLE, COMPOSTABLE, REUSABLE, RECYCLED_MATERIALS, WATER_EFFICIENT, SOLAR_POWERED, MINIMAL_CARBON_FOOTPRINT, ENERGY_EFFICIENT, ZERO_WASTE, PLASTIC_FREE, REPAIRABLE_DESIGN, UPCYCLED, CARBON_OFFSET, ORGANIC_MATERIALS, FAIR_TRADE, VEGAN, NON_TOXIC, REGENERATIVE_AGRICULTURE, SLOW_PRODUCTION, WASTE_REDUCING_DESIGN, CIRCULAR_DESIGN, WILDLIFE_FRIENDLY]
  *                 description: Sustainability features.
  *                 example: ["RECYCLED_MATERIALS", "ZERO_WASTE"]
  *               packaging:
@@ -137,8 +122,8 @@
  *       200:
  *         description: >
  *           The product was created successfully. Depending on the sustainability vetting result:
- *           - If inconclusive, a message is returned inviting the seller to apply for extended vetting.
- *           - Otherwise, the product data is returned with sustainability scores and approval status.
+ *           - If the sustainability score is "0" or "0.5", a message is returned indicating that extended vetting is required or the product is rejected.
+ *           - Otherwise, the product data is returned with updated sustainability scores and approval status.
  *         content:
  *           application/json:
  *             schema:
@@ -222,7 +207,7 @@
  *                           example: "Recycle after use"
  *                         certification:
  *                           type: object
- *                           description: Certification file details.
+ *                           description: Certification details.
  *                           properties:
  *                             certificate:
  *                               type: string
@@ -248,7 +233,7 @@
  *                           type: string
  *                           example: "APPROVED"
  *       400:
- *         description: Validation error or bad request.
+ *         description: Validation error or bad request. (e.g., missing required fields, invalid enum values)
  *         content:
  *           application/json:
  *             schema:
@@ -282,7 +267,7 @@
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       403:
- *         description: Access denied if the authenticated user's ID does not match the seller ID.
+ *         description: Access denied if the authenticated user's ID does not match the seller's ID.
  *         content:
  *           application/json:
  *             schema:

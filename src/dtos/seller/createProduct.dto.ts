@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsOptional, IsString, Length, IsNumber, IsEnum, IsArray, IsBoolean, IsJSON, validate } from 'class-validator';
-import { Packaging, sourcing, SustainabilityFeature } from '@prisma/client';
+import { Packaging, Sourcing, SustainabilityFeature } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { ErrorHandler } from '../../utils/errorHandler';
 import { Request } from 'express';
@@ -12,7 +12,7 @@ class CreateProductDto {
 
   @IsNotEmpty({ message: 'Description is required' })
   @IsString({ message: 'Description must be a string' })
-  @Length(1, 255, { message: 'Description must be between 1 and 255 characters' })
+  @Length(1, 1000, { message: 'Description must be between 1 and 255 characters' })
   description!: string;
 
   @IsOptional()
@@ -28,7 +28,7 @@ class CreateProductDto {
   category!: string;
 
   @IsOptional()
-  options!: object;
+  options?: object;
 
   @IsNotEmpty({ message: 'Price is required' })
   @IsNumber({}, { message: 'Price must be a number' })
@@ -44,7 +44,7 @@ class CreateProductDto {
 
   @IsNotEmpty({ message: 'Sourcing is required' })
   @IsString({ message: 'sourcing must be a string' })
-  @IsEnum(sourcing, { message: 'Invalid sourcing provided'})
+  @IsEnum(Sourcing, { message: 'Invalid sourcing provided'})
   sourcing!: string;
 
   @IsNotEmpty({ message: 'Seller ID is required' })
@@ -53,7 +53,7 @@ class CreateProductDto {
 }
 
 async function validateCreateProductDto(req: Request): Promise<void> {
-  if (req.user.id !== req.body.sellerId) {
+  if (req.user.id !== req.params.userId) {
     throw new ErrorHandler(403, 'Access denied');
   }
 
@@ -61,8 +61,15 @@ async function validateCreateProductDto(req: Request): Promise<void> {
     throw new ErrorHandler(400, 'Product Images are required');
   }
 
-  const combinedDEata = { ...req.body, userId: req.params.userId };
-  const dtoInstance = plainToInstance(CreateProductDto, combinedDEata);
+  req.body.onDemand = JSON.parse(req.body.onDemand);
+  req.body.price = JSON.parse(req.body.price);
+  req.body.sustainabilityFeatures = JSON.parse(req.body.sustainabilityFeatures);
+
+  const combinedData = {
+    ...req.body,
+    userId: req.params.userId
+  };
+  const dtoInstance = plainToInstance(CreateProductDto, combinedData);
   const errors = await validate(dtoInstance);
 
   if (errors.length > 0) {

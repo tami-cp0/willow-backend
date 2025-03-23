@@ -3,9 +3,10 @@ model LastViewed {
   customerId  String    @map("customer_id")
   product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId   String    @map("product_id")
+  weight      Float     @default(3)
   viewedAt    DateTime  @default(now()) @map("viewed_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  @@unique([customerId, productId])
+  @@unique([customerId, productId]) // Prevent duplicate entries for the same product per customer
   @@map("last_viewed")
 }

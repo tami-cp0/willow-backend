@@ -1,14 +1,14 @@
 /**
  * @openapi
- * /sellers/{userId}/conversations/{conversationId}:
+ * /customers/{userId}/conversations/{conversationId}:
  *   get:
- *     summary: Get a specific conversation
+ *     summary: Get conversation with messages
  *     description: >
- *       Retrieves details for a specific conversation belonging to the seller, including all messages - from latest to oldest
- *       as well as associated customer and seller details.
+ *       Retrieves a specific conversation for the customer, including all messages ordered from oldest to newest.
+ *       Each message may include attached images whose URLs are updated with signed URLs.
  *       This endpoint requires cookie-based authentication.
  *     tags:
- *       - Sellers
+ *       - Customers
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -17,7 +17,7 @@
  *         required: true
  *         schema:
  *           type: string
- *         description: The seller's user ID.
+ *         description: The customer's user ID (must match the authenticated user).
  *       - in: path
  *         name: conversationId
  *         required: true
@@ -49,16 +49,19 @@
  *                       type: string
  *                       format: date-time
  *                       example: "2025-02-27T09:05:00Z"
+ *                     isFlagged:
+ *                       type: boolean
+ *                       example: false
  *                     customer:
  *                       type: object
  *                       properties:
  *                         userId:
  *                           type: string
- *                           example: "customer456"
- *                         firstName:
+ *                           example: "cust123"
+ *                         firstname:
  *                           type: string
  *                           example: "John"
- *                         lastName:
+ *                         lastname:
  *                           type: string
  *                           example: "Doe"
  *                     seller:
@@ -72,7 +75,7 @@
  *                           example: "Green Supplies Inc."
  *                     messages:
  *                       type: array
- *                       description: All messages in the conversation, ordered by creation time (ascending).
+ *                       description: All messages in the conversation, ordered by createdAt ascending.
  *                       items:
  *                         type: object
  *                         properties:
@@ -84,19 +87,56 @@
  *                             example: "conv123"
  *                           senderId:
  *                             type: string
- *                             example: "customer456"
+ *                             example: "cust123"
  *                           receiverId:
  *                             type: string
  *                             example: "seller123"
  *                           content:
  *                             type: string
- *                             example: "Hello"
+ *                             example: "Hello, I have a question about my order."
+ *                           images:
+ *                             type: array
+ *                             description: Array of image objects with signed URLs.
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 key:
+ *                                   type: string
+ *                                   example: "imgKey1"
+ *                                 url:
+ *                                   type: string
+ *                                   example: "https://signed-url.com/imgKey1"
  *                           createdAt:
  *                             type: string
  *                             format: date-time
  *                             example: "2025-02-27T09:00:00Z"
+ *             examples:
+ *               sampleConversation:
+ *                 summary: Sample conversation with messages
+ *                 value:
+ *                   status: "success"
+ *                   data:
+ *                     id: "conv123"
+ *                     createdAt: "2025-02-27T09:00:00Z"
+ *                     updatedAt: "2025-02-27T09:05:00Z"
+ *                     isFlagged: false
+ *                     customer:
+ *                       userId: "cust123"
+ *                       firstname: "John"
+ *                       lastname: "Doe"
+ *                     seller:
+ *                       userId: "seller123"
+ *                       businessName: "Green Supplies Inc."
+ *                     messages:
+ *                       - id: "msg101"
+ *                         conversationId: "conv123"
+ *                         senderId: "cust123"
+ *                         receiverId: "seller123"
+ *                         content: "Hello, I have a question about my order."
+ *                         images: []
+ *                         createdAt: "2025-02-27T09:00:00Z"
  *       400:
- *         description: Validation error or bad request.
+ *         description: Validation error (e.g., missing conversation ID).
  *         content:
  *           application/json:
  *             schema:
@@ -115,7 +155,7 @@
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       403:
- *         description: Access denied if the authenticated user's ID does not match the seller user ID.
+ *         description: Access denied if the authenticated user's ID does not match the customer user ID.
  *         content:
  *           application/json:
  *             schema:

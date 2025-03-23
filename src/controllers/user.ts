@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { sendEmail } from "../utils/sendEmails";
 import validateCreateUserDto from "../dtos/user/createUser.dto";
 
-class userController {
+export default class userController {
     static async register(req: Request, res: Response, next: NextFunction) {
         try {
           await validateCreateUserDto(req);
@@ -67,6 +67,17 @@ class userController {
             next(error);
         }
     }
-}
 
-export default userController;
+    static async getUser(req: Request, res: Response, next: NextFunction) {
+        try {
+          const user = req.user;
+    
+          res.status(200).json({
+            status: 'success',
+            data: user,
+          });
+        } catch (error) {
+          next(error);
+        }
+    }
+}

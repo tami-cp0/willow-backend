@@ -11,9 +11,10 @@ enum UserStatus {
 
 model User {
   id          String     @id @default(ulid()) @map("id")
-  email       String?    @unique
-  password    String?
-  role        Role       
+  email       String     @unique
+  password    String
+  role        Role
+  subscribed  Boolean    @default(false)
   status      UserStatus @default(ACTIVE)
   isVerified  Boolean    @default(false) @map("is_verified")
   lastLoggedIn DateTime? @map("last_logged_in")
