@@ -21,7 +21,7 @@ customerRouter.route('/:userId/liked-products/:productId').delete(minimalRateLim
 
 customerRouter.route('/:userId/last-viewed').get(minimalRateLimiter, authMiddleware, customerController.getLastViewed);
 
-// customerRouter.route('/customers/:userId/recommendations').get();
+customerRouter.route('/customers/:userId/recommendations').get(minimalRateLimiter, authMiddleware, customerController.getRecommendations);
 
 customerRouter.route('/:userId/orders').get(minimalRateLimiter, authMiddleware, customerController.getOrders); // query options: SUCCESS, FAILED
 customerRouter.route('/:userId/orders/:orderId').get(minimalRateLimiter, authMiddleware, customerController.getOrder);
