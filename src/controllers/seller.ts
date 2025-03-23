@@ -7,7 +7,7 @@ import validateGetOrderDto from '../dtos/seller/getOrder.dto';
 import validateUpdateOrderStatusDto from '../dtos/seller/updateOrderStatus.dto';
 import validateGetProductsDto from '../dtos/seller/getProducts.dto';
 import validateCreateProductDto from '../dtos/seller/createProduct.dto';
-import generateProductEmbedding from '../utils/dataEmbedding';
+import generateProductEmbedding from '../utils/generateEmbedding';
 import { ApprovalStatus, Prisma, Product } from '@prisma/client';
 import vetProduct from '../utils/vetProduct';
 import validateGetProductDto from '../dtos/seller/getProduct.dto';
@@ -257,6 +257,50 @@ export default class sellerController {
 					page,
 					limit,
 					totalPages: Math.ceil(total / limit),
+				},
+			});
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	// NO DTO
+	static async searchProducts(req: Request, res: Response, next: NextFunction) {
+		const text = req.query.text as string;
+		const userId = req.params.userId;
+		const approvalStatus = req.query.approvalStatus || 'APPROVED';  // Default to 'APPROVED'
+		const page = Number(req.query.page as string) || 1;
+		const limit = Number(req.query.limit as string) || 20;
+		const offset = (page - 1) * limit;
+	
+		if (!text) return next(new ErrorHandler(400, 'text is missing'));
+		if (!userId) return next(new ErrorHandler(400, 'userId is missing'));
+	
+		try {
+			const embedding = await generateProductEmbedding(undefined, text);
+	
+			const products = await prisma.$queryRaw`
+				SELECT *, (embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`}) AS similarity
+				FROM products
+				WHERE approval_status = ${Prisma.sql`${approvalStatus}`}::ApprovalStatus
+				ORDER BY embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`} ASC
+				LIMIT ${Prisma.sql`${limit}`} OFFSET ${Prisma.sql`${offset}`};
+			`;
+	
+			const total = await prisma.$queryRaw`
+				SELECT COUNT(*)::int AS total
+				FROM products
+				WHERE approval_status = ${Prisma.sql`${approvalStatus}`}::ApprovalStatus;
+			` as any;
+	
+			res.status(200).json({
+				status: 'success',
+				data: products,
+				pagination: {
+					total: total[0]?.total || 0,
+					page,
+					limit,
+					totalPages: Math.ceil((total[0]?.total || 0) / limit),
 				},
 			});
 		} catch (error) {
