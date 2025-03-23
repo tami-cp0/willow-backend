@@ -614,13 +614,13 @@ export default class customerController {
 		}
 	}
 
-	static async getRecommendations(req: Request, res: Response, next: NextFunction) {
+	static async computeRecommendations(userId: string) {
 		try {
 			const hasInteractions: { exists: boolean }[] = await prisma.$queryRaw`
 				SELECT EXISTS (
-					SELECT 1 FROM liked_products WHERE customer_id = ${req.user.id}
+					SELECT 1 FROM liked_products WHERE customer_id = ${userId}
 					UNION 
-					SELECT 1 FROM last_viewed WHERE customer_id = ${req.user.id}
+					SELECT 1 FROM last_viewed WHERE customer_id = ${userId}
 				) AS exists;
 			`;
 
@@ -636,7 +636,7 @@ export default class customerController {
 						LIMIT 5
 					)
 					INSERT INTO recommendations (product_id, customer_id, updated_at)
-					SELECT id, ${req.user.id}, NOW() FROM selected_products
+					SELECT id, ${userId}, NOW() FROM selected_products
 					WHERE (SELECT COUNT(*) FROM selected_products) = 5;
 				`;
 			} else {
@@ -684,38 +684,28 @@ export default class customerController {
 				`;
 			}
 
-			let recommendations: Recommendation[]
-
-			if (typeof result === "number") {
-				recommendations = await prisma.recommendation.findMany({
-					where: {
-						customerId: req.user.id
-					}
-				});
-			} else {
+			if (typeof result !== "number") {
 				if (result.length !== 0) {
 					const normalizedEmbedding = getNormalizedWeightedSum(result);
 					const normalizedEmbeddingString = `[${normalizedEmbedding.join(",")}]`;
 
-					recommendations = await prisma.$queryRaw`
-						SELECT
+					await prisma.$queryRaw`
+						WITH similar_products AS (
+							SELECT
 							*,
 							1 - (embedding <=> ${Prisma.sql`${normalizedEmbeddingString}`}) as similarity
-						FROM products
-						ORDER BY similarity DESC
-						LIMIT 5
+							FROM products
+							ORDER BY similarity DESC
+							LIMIT 5
+						)
+						INSERT INTO recommendations (product_id, customer_id, updated_at)
+						SELECT id, ${userId}, NOW() FROM similar_products
+						WHERE (SELECT COUNT(*) FROM similar_products) = 5;
 					`;
-
-
-				} else recommendations = [];
+				}
 			}
-
-			res.status(200).json({
-				status: "success",
-				data: recommendations
-			});
 		} catch (error) {
-			next(error);
+			throw new ErrorHandler(500, "Recommendations computation error");
 		}
 	}
 }
