@@ -66,12 +66,14 @@ export default class authController {
                 })
             ]);
 
-            let job = getJob(user.id);
-            if (job) {
-                job.start()
-            } else {
-                job = await scheduleRecommendationUpdates(user.id);
-                job.start()
+            if (user.role === 'CUSTOMER') {
+                let job = getJob(user.id);
+                if (job) {
+                    job.start()
+                } else {
+                    job = await scheduleRecommendationUpdates(user.id);
+                    job.start()
+                }
             }
 
             res.cookie('accessToken', accessToken, {
@@ -176,12 +178,14 @@ export default class authController {
                 })
             ]);
 
-            let job = getJob(user.id);
-            if (job) {
-                job.start()
-            } else {
-                job = await scheduleRecommendationUpdates(user.id);
-                job.start()
+            if (user.role === 'CUSTOMER') {
+                let job = getJob(user.id);
+                if (job) {
+                    job.start()
+                } else {
+                    job = await scheduleRecommendationUpdates(user.id);
+                    job.start()
+                }
             }
 
             res.cookie('accessToken', accessToken, {
@@ -223,10 +227,11 @@ export default class authController {
                 cache.removeUser(req.user.id)
             ]);
 
-            const job = getJob(req.user.id);
-            if (job) {
-                job.stop();
-                deleteJob(req.user.id);
+            if (req.user.role === 'CUSTOMER') {
+                let job = getJob(req.user.id);
+                if (job) {
+                    job.stop()
+                }
             }
     
             res.status(204).end();
