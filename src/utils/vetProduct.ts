@@ -90,7 +90,11 @@ You are a sustainability vetting agent for Willow, an eco-conscious marketplace.
    - Indicates negligible or harmful sustainability efforts. These items lack meaningful eco-friendly features.
    - Example: Single-use plastics with no recycling options or sustainability initiatives.
 
-6. **0 (Inconclusive)**:
+6. **0.5 (Details Mismatch)**:
+   - Applied when the image is different from the other product information provided.
+   - Example: image - a car, other information points towards a cotton shirt.
+
+7. **0 (Inconclusive)**:
    - Applied when **core sustainability claims cannot be verified**, or data/images are insufficient for meaningful evaluation.
    - Example: Products claiming "100% organic" with no evidence or clarity from seller data or images.
 
