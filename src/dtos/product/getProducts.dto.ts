@@ -17,6 +17,10 @@ class GetAllProductsDto {
   @IsString({ message: 'Status must be a string' })
   @IsIn(['PENDING', 'APPROVED', 'REJECTED'], { message: 'Invalid status' })
   status?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Seller ID must be a string' })
+  seller?: string;
 }
 
 async function validateGetAllProductsDto(req: Request): Promise<void> {
@@ -24,6 +28,7 @@ async function validateGetAllProductsDto(req: Request): Promise<void> {
     page: req.query.page,
     limit: req.query.limit,
     status: req.query.status,
+    seller: req.query.sellerId
   });
   
   const errors = await validate(dtoInstance);

@@ -21,9 +21,15 @@ export default class productController {
 			const skip = (page - 1) * limit;
 			const status = req.query.status as string;
 
-			const where: Record<string, any> = {};
+			const { sellerId } = req.query;
+
+			const where: Record<string, any> = {approvalStatus: 'APPROVED'};
 			if (status) {
 				where.approvalStatus = 'APPROVED';
+			}
+
+			if (sellerId) {
+				where.sellerId = sellerId;
 			}
 
 			const [products, total] = await prisma.$transaction([
@@ -100,7 +106,7 @@ export default class productController {
 			const { productId } = req.params;
 
 			const product = await prisma.product.findUnique({
-				where: { id: productId },
+				where: { id: productId, approvalStatus: 'APPROVED' },
 				include: { reviews: true, seller: true },
 			});
 
