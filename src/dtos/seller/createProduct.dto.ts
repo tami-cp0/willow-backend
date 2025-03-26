@@ -63,7 +63,13 @@ async function validateCreateProductDto(req: Request): Promise<void> {
 
   req.body.onDemand = JSON.parse(req.body.onDemand);
   req.body.price = JSON.parse(req.body.price);
+  req.body.inStock = JSON.parse(req.body.inStock);
   req.body.sustainabilityFeatures = JSON.parse(req.body.sustainabilityFeatures);
+
+  if (req.body.onDemand === true) {
+    // remove inStock if onDemand is true
+    delete req.body.inStock;
+  }
 
   const combinedData = {
     ...req.body,

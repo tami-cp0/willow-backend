@@ -3,13 +3,24 @@ import multer from "multer";
 import { r2Client, validBuckets } from "../config/r2Config";
 import { ErrorHandler } from "../utils/errorHandler";
 
+const profileRegex = /^\/api\/v1\/sellers\/.+\/update-profile$/;
+const productsRegex = /^\/api\/v1\/sellers\/.+\/products$/;
+
+// not yet available
+// const messageRegex = /^\/api\/v1\/sellers\/[^/]+\/update-profile$/;
+
 const s3Storage = multerS3({
   s3: r2Client,
   bucket: (req: any, file: Express.Multer.File, cb: (error: any, bucket?: string | undefined) => void) => {
-    const bucketName = req.body.bucketName;
-    if (!validBuckets.includes(bucketName)) {
-      return cb(new ErrorHandler(400, "Invalid bucket name"));
+    const bucketName = req.body?.bucketName;
+    if (profileRegex.test(req.originalUrl)) {
+      return cb(null, "avatars");
     }
+
+    if (productsRegex.test(req.originalUrl)) {
+      return cb(null, "products");
+    }
+
     cb(null, bucketName);
   },  
   acl: "private",
@@ -21,7 +32,7 @@ const s3Storage = multerS3({
 });
 
 function fileFilter(req: any, file: Express.Multer.File, cb: (error: any, acceptFile?: boolean) => void) {
-  if (file.fieldname === 'images') {
+  if (file.fieldname === 'images' || file.fieldname === 'avatar') {
     if (!file.mimetype.startsWith("image/")) {
       return cb(new ErrorHandler(400, "Only images are allowed"));
     }
