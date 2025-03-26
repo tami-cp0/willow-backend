@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNotEmpty, IsObject } from 'class-validator';
+import { IsOptional, IsString, IsNotEmpty, IsObject, IsBoolean } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { Request } from 'express';
@@ -16,6 +16,10 @@ class UpdateCustomerProfileDto {
   @IsOptional()
   @IsObject({ message: 'Address must be a valid JSON object' })
   address?: object;
+
+  @IsOptional()
+  @IsBoolean({ message: 'Subscribed must be a boolean' })
+  subscribed?: boolean;
 }
 
 async function validateUpdateCustomerProfileDto(req: Request): Promise<void> {
@@ -23,6 +27,8 @@ async function validateUpdateCustomerProfileDto(req: Request): Promise<void> {
         throw new ErrorHandler(403, 'Access denied');
       }
       
+  req.body.subscribed = JSON.parse(req.body.subscribed);
+
   // Validate the request body against the DTO
   const dtoInstance = plainToInstance(UpdateCustomerProfileDto, req.body);
   const errors = await validate(dtoInstance);

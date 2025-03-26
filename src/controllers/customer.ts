@@ -77,7 +77,7 @@ export default class customerController {
 		try {
 			await validateUpdateCustomerProfileDto(req);
 
-			const { firstname, lastname, address } = req.body;
+			const { firstname, lastname, address, subscribed } = req.body;
 			const userId = req.params.userId;
 
 			const user = await prisma.customer.update({
@@ -86,6 +86,7 @@ export default class customerController {
 					firstname,
 					lastname,
 					address,
+					subscribed
 				},
 				include: {
 					user: true,
