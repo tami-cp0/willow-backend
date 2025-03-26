@@ -7,7 +7,7 @@ import { User } from "@prisma/client";
 import prisma from "../app";
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-    console.log(`Request made to ${req.originalUrl} by ${req.ip}`);
+    console.log(`${req.method} Request made to ${req.originalUrl} by ${req.ip}`);
 
     const accessToken: string | undefined = req.cookies?.accessToken;
     const secret: string = process.env.JWT_SECRET as string;
