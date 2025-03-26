@@ -14,11 +14,11 @@ const s3Storage = multerS3({
   bucket: (req: any, file: Express.Multer.File, cb: (error: any, bucket?: string | undefined) => void) => {
     const bucketName = req.body?.bucketName;
     if (profileRegex.test(req.originalUrl)) {
-      cb(null, "avatars");
+      return cb(null, "avatars");
     }
 
     if (productsRegex.test(req.originalUrl)) {
-      cb(null, "products");
+      return cb(null, "products");
     }
 
     cb(null, bucketName);
