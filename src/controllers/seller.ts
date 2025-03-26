@@ -412,20 +412,25 @@ export default class sellerController {
 			let embedding;
 
 			if (sustainabilityScore === '0') {
+				sendEmail({inconclusive: true}, req.user.email, '', '', product);
 				message =
 					'Thank you for your submission. Based on our initial assessment, the available data was insufficient for a definitive sustainability evaluation. We invite you to apply for extended vetting, which provides an extended in-person review to help determine if your product meets our sustainability criteria for listing';
 			} else if (sustainabilityScore === '0.5') {
+				sendEmail({mismatch: true}, req.user.email, '', '', product);
 				message =
 					'Thank you for your submission. However, our initial assessment identified a significant mismatch between the provided product description and the uploaded images. Due to this discrepancy, we are unable to evaluate the sustainability of your product. We recommend updating your listing with accurate details and images that align with the product description before resubmitting for review.';
 				approvalStatus = 'REJECTED';
 			} else {
-				message =
-					'Congratulations! Your product has met our sustainability criteria and has been approved for listing on our eco-friendly marketplace. Thank you for contributing to a more responsible and sustainable future.';
-				approvalStatus = 'APPROVED';
 				if (Number(sustainabilityScore) < 50) {
+					sendEmail({rejection: true}, req.user.email, '', '', product);
 					approvalStatus = 'REJECTED';
 					message =
 						'Thank you for your submission. Unfortunately, after a comprehensive sustainability evaluation, your product did not meet our minimum standards and will not be listed. Please review our guidelines for further improvements and consider resubmitting in the future.';
+				} else {
+					sendEmail({success: true}, req.user.email, '', '', product);
+					message =
+						'Congratulations! Your product has met our sustainability criteria and has been approved for listing on our eco-friendly marketplace. Thank you for contributing to a more responsible and sustainable future.';
+					approvalStatus = 'APPROVED';
 				}
 
 				product = {
@@ -443,6 +448,7 @@ export default class sellerController {
 					approvalStatus = 'PENDING';
 					message =
 						"Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
+					// send email to admin
 					sendEmail(
 						'certificate',
 						req.user.email as string,
@@ -450,6 +456,9 @@ export default class sellerController {
 						'',
 						product
 					);
+
+					// send email to seller
+					sendEmail({certificate: true}, req.user.email, '', '', product);
 				}
 			}
 
