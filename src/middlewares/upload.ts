@@ -32,7 +32,7 @@ const s3Storage = multerS3({
 });
 
 function fileFilter(req: any, file: Express.Multer.File, cb: (error: any, acceptFile?: boolean) => void) {
-  if (file.fieldname === 'images') {
+  if (file.fieldname === 'images' || file.fieldname === 'avatar') {
     if (!file.mimetype.startsWith("image/")) {
       return cb(new ErrorHandler(400, "Only images are allowed"));
     }
