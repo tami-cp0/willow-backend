@@ -19,7 +19,7 @@ export default class productController {
 			const page = Number(req.query.page as string) || 1;
 			const limit = Number(req.query.limit as string) || 20;
 			const skip = (page - 1) * limit;
-			const status = req.query.status as string;
+			const status = req.query.status;
 
 			const { sellerId } = req.query;
 
