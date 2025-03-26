@@ -268,7 +268,7 @@ export default class sellerController {
 	static async searchProducts(req: Request, res: Response, next: NextFunction) {
 		const text = req.query.text as string;
 		const userId = req.params.userId
-		const approvalStatus = req.query.approvalStatus || 'APPROVED'; // Default to 'APPROVED'
+		const approvalStatus = req.query.approvalStatus;
 		const page = Number(req.query.page as string) || 1;
 		const limit = Number(req.query.limit as string) || 20;
 		const offset = (page - 1) * limit;
@@ -280,21 +280,26 @@ export default class sellerController {
 			const embedding = await generateProductEmbedding(undefined, text);
 	
 			const embeddingVector = Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`;
-	
-			const products = await prisma.$queryRaw`
-				SELECT *, similarity
-				FROM (
-					SELECT *, (embedding <=> ${embeddingVector}) AS similarity
+
+            const products = await prisma.$queryRaw`
+				WITH ranked_products AS (
+					SELECT id, name, description, images, in_stock, on_demand, category, options, price,
+						sold_out, approval_status, packaging, 
+						created_at, updated_at, end_of_life_info, sourcing, sustainability_score, 
+						sustainability_score_reason, sustainability_tag, certification, seller_id,
+						(1 - (embedding <=> ${embeddingVector}))::float AS similarity
 					FROM products
-					WHERE approval_status = ${Prisma.sql`${approvalStatus}`}::"ApprovalStatus"
+					WHERE (${Prisma.sql`${approvalStatus}`} IS NULL OR approval_status = ${Prisma.sql`${approvalStatus}`}::"ApprovalStatus")
+					AND embedding IS NOT NULL
 					AND seller_id = ${Prisma.sql`${userId}`}
-				) sub
-				ORDER BY similarity ASC
+				)
+				SELECT * FROM ranked_products
+				WHERE similarity > 0.5
+				ORDER BY similarity DESC
 				LIMIT ${Prisma.sql`${limit}`}
 				OFFSET ${Prisma.sql`${offset}`};
 			`;
 
-	
 			res.status(200).json({
 				status: 'success',
 				data: products,

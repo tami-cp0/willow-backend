@@ -70,19 +70,27 @@ export default class productController {
             const embedding = await generateProductEmbedding(undefined, text);
     
             const embeddingVector = Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`;
+			
     
             const products = await prisma.$queryRaw`
-                SELECT *, similarity
-                FROM (
-                    SELECT *, (embedding <=> ${embeddingVector}) AS similarity
-                    FROM products
-                    WHERE approval_status = 'APPROVED'::"ApprovalStatus"
-                ) sub
-                ORDER BY similarity ASC
-                LIMIT ${Prisma.sql`${limit}`}
-                OFFSET ${Prisma.sql`${offset}`};
-            `;
-    
+				WITH ranked_products AS (
+					SELECT id, name, description, images, in_stock, on_demand, category, options, price,
+						sold_out, approval_status, packaging, 
+						created_at, updated_at, end_of_life_info, sourcing, sustainability_score, 
+						sustainability_score_reason, sustainability_tag, certification, seller_id,
+						(1 - (embedding <=> ${embeddingVector}))::float AS similarity
+					FROM products
+					WHERE approval_status = 'APPROVED'::"ApprovalStatus"
+					AND embedding IS NOT NULL
+				)
+				SELECT * FROM ranked_products
+				WHERE similarity > 0.5
+				ORDER BY similarity DESC
+				LIMIT ${Prisma.sql`${limit}`}
+				OFFSET ${Prisma.sql`${offset}`};
+			`;
+
+
             res.status(200).json({
                 status: 'success',
                 data: products,
