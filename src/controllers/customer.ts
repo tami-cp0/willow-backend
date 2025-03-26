@@ -617,98 +617,119 @@ export default class customerController {
 
 	static async computeRecommendations(userId: string) {
 		try {
-			const hasInteractions: { exists: boolean }[] = await prisma.$queryRaw`
+			// Check user interactions
+			const hasInteractions = await prisma.$queryRaw<{exists: boolean}[]>`
 				SELECT EXISTS (
 					SELECT 1 FROM liked_products WHERE customer_id = ${userId}
 					UNION 
 					SELECT 1 FROM last_viewed WHERE customer_id = ${userId}
+					UNION
+					SELECT 1 FROM reviews WHERE customer_id = ${userId}
+					UNION
+					SELECT 1 FROM orders o
+					JOIN transactions t ON o.id = t.order_id
+					WHERE t.customer_id = ${userId} AND t.status = 'SUCCESS'
 				) AS exists;
 			`;
-
-			const userHasInteractions = hasInteractions[0].exists;
-
-			let result: {embedding: number[], weight: number}[] | number;
-
+	
+			const userHasInteractions = hasInteractions[0]?.exists ?? false;
+	
 			if (!userHasInteractions) {
-				result = await prisma.$executeRaw`
-					WITH selected_products AS (
+				await prisma.$transaction(async (tx) => {
+					const selectedProducts = await tx.$queryRaw<{id: string}[]>`
 						SELECT id FROM products
-						WHERE approval_status = 'APPROVED'::"ApprovalStatus"
-						ORDER BY random()
+						WHERE approval_status = 'APPROVED'::\"ApprovalStatus\"
+						ORDER BY RANDOM()
 						LIMIT 5
-					)
-					INSERT INTO recommendations (product_id, customer_id, updated_at)
-					SELECT id, ${Prisma.sql`${userId}`}, NOW() FROM selected_products
-					WHERE (SELECT COUNT(*) FROM selected_products) = 5;
-				`;
+					`;
+	
+					if (selectedProducts.length > 0) {
+						await tx.$executeRaw`
+							INSERT INTO recommendations (product_id, customer_id, updated_at)
+							VALUES ${Prisma.join(
+								selectedProducts.map(p => Prisma.sql`(${p.id}, ${userId}, NOW())`)
+							)};
+						`;
+					}
+				});
 			} else {
-				// use half life formula to check how decay rate drops influence over time
-				const decayRate: Record<string, number> = {
+				const decayRates = {
 					like: 0.005,
 					view: 0.02,
 					review: 0.002,
 					order: 0.01
-				}
-
-				result = await prisma.$queryRaw`
+				};
+	
+				const interactions = await prisma.$queryRaw<{embedding: number[], weight: number}[]>`
 					SELECT 
 						p.embedding, 
-						(lp.weight * EXP(-${decayRate.like} * EXTRACT(EPOCH FROM (NOW() - lp.created_at)) / 86400)) AS weight
+						(lp.weight * EXP(-${decayRates.like} * EXTRACT(EPOCH FROM (NOW() - lp.created_at)) / 86400)) AS weight
 					FROM liked_products lp
 					JOIN products p ON lp.product_id = p.id
-
+					WHERE lp.customer_id = ${userId}
+	
 					UNION ALL
-
+	
 					SELECT 
 						p.embedding, 
-						(lv.weight * EXP(-${decayRate.view} * EXTRACT(EPOCH FROM (NOW() - lv.viewed_at)) / 86400)) AS weight
+						(lv.weight * EXP(-${decayRates.view} * EXTRACT(EPOCH FROM (NOW() - lv.viewed_at)) / 86400)) AS weight
 					FROM last_viewed lv
 					JOIN products p ON lv.product_id = p.id
-
+					WHERE lv.customer_id = ${userId}
+	
 					UNION ALL
-
+	
 					SELECT 
 						p.embedding, 
-						(r.weight * EXP(-${decayRate.review} * EXTRACT(EPOCH FROM (NOW() - r.created_at)) / 86400)) AS weight
+						(r.weight * EXP(-${decayRates.review} * EXTRACT(EPOCH FROM (NOW() - r.created_at)) / 86400)) AS weight
 					FROM reviews r
 					JOIN products p ON r.product_id = p.id
-
+					WHERE r.customer_id = ${userId}
+	
 					UNION ALL
-
+	
 					SELECT 
 						p.embedding, 
-						(o.weight * EXP(-${decayRate.order} * EXTRACT(EPOCH FROM (NOW() - o.created_at)) / 86400)) AS weight
+						(o.weight * EXP(-${decayRates.order} * EXTRACT(EPOCH FROM (NOW() - t.created_at)) / 86400)) AS weight
 					FROM orders o
 					JOIN transactions t ON o.id = t.order_id
 					JOIN order_items ot ON o.id = ot.order_id
 					JOIN products p ON ot.product_id = p.id
-					WHERE t.status = 'SUCCESS'
+					WHERE t.customer_id = ${userId} AND t.status = 'SUCCESS'
 				`;
-			}
-
-			if (typeof result !== "number") {
-				if (result.length !== 0) {
-					const normalizedEmbedding = getNormalizedWeightedSum(result);
-					const normalizedEmbeddingArray = Prisma.sql`ARRAY[${Prisma.join(normalizedEmbedding)}]::vector`;
-
-					await prisma.$queryRaw`
-						WITH similar_products AS (
-							SELECT
-								*,
-								(embedding <=> ${normalizedEmbeddingArray}) AS similarity
-							FROM products
-							WHERE approval_status = 'APPROVED'::"ApprovalStatus"
-							ORDER BY similarity ASC
-							LIMIT 5
-						)
-						INSERT INTO recommendations (product_id, customer_id, updated_at)
-						SELECT id, ${Prisma.sql`${userId}`}, NOW() FROM similar_products
-						WHERE (SELECT COUNT(*) FROM similar_products) = 5;
-					`;
+	
+				if (interactions.length > 0) {
+					const normalizedEmbedding = getNormalizedWeightedSum(interactions);
+					
+					await prisma.$transaction(async (tx) => {
+						const similarProducts = await tx.$queryRaw<{id: string}[]>`
+							WITH similar_products AS (
+								SELECT
+									id,
+									(embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(normalizedEmbedding.map(String))}]::vector`}) AS similarity
+								FROM products
+								WHERE approval_status = 'APPROVED'::\"ApprovalStatus\"
+								ORDER BY similarity ASC
+								LIMIT 5
+							)
+							SELECT id FROM similar_products;
+						`;
+	
+						// Insert available recommendations, IF there are at least 5 similar products
+						if (similarProducts.length > 4) {
+							await tx.$executeRaw`
+								INSERT INTO recommendations (product_id, customer_id, updated_at)
+								VALUES ${Prisma.join(
+									similarProducts.map(p => Prisma.sql`(${p.id}, ${userId}, NOW())`)
+								)};
+							`;
+						}
+					});
 				}
 			}
 		} catch (error) {
-			throw new ErrorHandler(500, "Recommendations computation error");
+			console.error('Recommendations computation error:', error);
+			throw new ErrorHandler(500, "Failed to compute recommendations");
 		}
 	}
 

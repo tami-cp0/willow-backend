@@ -5,25 +5,26 @@
  * @returns number[] - A normalized vector representing the weighted average of the input embeddings.
  */
 export default function getNormalizedWeightedSum(vectors: {embedding: number[], weight: number}[]): number[] {
-    const weightedSumEmbedding: number[] = new Array(vectors[0].embedding.length).fill(0);
+    if (vectors.length === 0) throw new Error('No vectors provided');
+    
+    const embeddingLength = vectors[0].embedding.length;
+    if (!vectors.every(v => v.embedding.length === embeddingLength)) {
+        throw new Error('Inconsistent embedding dimensions');
+    }
+
+    const weightedSumEmbedding: number[] = new Array(embeddingLength).fill(0);
     let totalWeight: number = 0;
-  
-    // Calculate the weighted sum of embeddings
+
     for (const vector of vectors) {
         vector.embedding.forEach((value, index) => {
-            weightedSumEmbedding[index] += value * vector.weight;  // Accumulate weighted values
+            weightedSumEmbedding[index] += value * vector.weight;
         });
         totalWeight += vector.weight;
     }
-  
-    // Divide by total weight to get the weighted average
-    weightedSumEmbedding.forEach((value, index, array) => {
-        array[index] = value / totalWeight;
-    });
 
-    // L2 normalization (magnitude calculation)
-    const magnitude = Math.sqrt(weightedSumEmbedding.reduce((sum, val) => sum + val * val, 0));
+    const weightedAverage = weightedSumEmbedding.map(val => val / totalWeight);
 
-    // Return the normalized vector
-    return weightedSumEmbedding.map(val => val / magnitude);
+    const magnitude = Math.sqrt(weightedAverage.reduce((sum, val) => sum + val * val, 0));
+
+    return weightedAverage.map(val => val / magnitude);
 }
