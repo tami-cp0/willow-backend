@@ -432,37 +432,35 @@ export default class sellerController {
 						'Congratulations! Your product has met our sustainability criteria and has been approved for listing on our eco-friendly marketplace. Thank you for contributing to a more responsible and sustainable future.';
 					approvalStatus = 'APPROVED';
 				}
+			} 
+			
+			if (certificateFile) {
+				certificateExists = true; // for frontend
+				approvalStatus = 'PENDING';
+				message =
+					"Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
+				// send email to admin
+				sendEmail(
+					'certificate',
+					req.user.email as string,
+					'',
+					'',
+					product
+				);
 
-				product = {
-					...product,
-					sustainabilityTag,
-					sustainabilityScore,
-					sustainabilityScoreReason,
-					approvalStatus,
-				};
-
-				embedding = await generateProductEmbedding(product);
-
-				if (certificateFile) {
-					certificateExists = true; // for frontend
-					approvalStatus = 'PENDING';
-					message =
-						"Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
-					// send email to admin
-					sendEmail(
-						'certificate',
-						req.user.email as string,
-						'',
-						'',
-						product
-					);
-
-					// send email to seller
-					sendEmail({certificate: true}, req.user.email, '', '', product);
-				}
+				// send email to seller
+				sendEmail({certificate: true}, req.user.email, '', '', product);
 			}
 
-			console.log(sustainabilityScore, sustainabilityScoreReason, sustainabilityTag)
+			product = {
+				...product,
+				sustainabilityTag,
+				sustainabilityScore,
+				sustainabilityScoreReason,
+				approvalStatus,
+			};
+
+			embedding = await generateProductEmbedding(product);
 
 			await prisma.$executeRawUnsafe(
 				`
