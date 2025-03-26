@@ -47,6 +47,7 @@
  *               firstname: "John"
  *               lastname: "Doe"
  *               address: { "street": "123 Main St", "city": "Anytown", "zip": "12345" }
+ *               subscribed: false
  *     responses:
  *       200:
  *         description: Customer profile updated successfully.
