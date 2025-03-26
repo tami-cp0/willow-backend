@@ -22,6 +22,14 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
             return next(new ErrorHandler(401, "Login required"));
         }
 
+        if (req.originalUrl.includes('/api/v1/sellers') && decoded.role !== 'SELLER') {
+            return next(new ErrorHandler(403, 'Unauthorized route - cannot access with Customers account'));
+        }
+
+        if ((req.originalUrl.includes('/api/v1/customers') || req.originalUrl.includes('/api/v1/products')) && decoded.role !== 'CUSTOMER') {
+            return next(new ErrorHandler(403, 'Unauthorized route - cannot access with Sellers account'));
+        }
+
         let user: User | null = await cache.getUser(decoded._id);
         if (!user) {
             user = await prisma.user.findUnique({
@@ -37,14 +45,6 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
             await cache.storeUser(user);
         }
         if (!user.isVerified) return next(new ErrorHandler(403, 'Account is not verified'));
-
-        if (req.originalUrl.includes('/api/v1/sellers') && user.role !== 'SELLER') {
-            return next(new ErrorHandler(403, 'Unauthorized route - cannot access with Customers account'));
-        }
-
-        if ((req.originalUrl.includes('/api/v1/customers') || req.originalUrl.includes('api/v1/products')) && user.role !== 'CUSTOMER') {
-            return next(new ErrorHandler(403, 'Unauthorized route - cannot access with Sellers account'));
-        }
         
         req.user = user;
 
