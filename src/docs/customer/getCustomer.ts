@@ -40,6 +40,9 @@
  *                     lastname:
  *                       type: string
  *                       example: "Doe"
+ *                     subscribed:
+ *                       type: boolean
+ *                       example: false
  *                     address:
  *                       type: object
  *                       description: JSON object representing the customer's address.

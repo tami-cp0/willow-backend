@@ -7,6 +7,7 @@
  *       Retrieves a paginated list of products with optional filtering by approval status.
  *       Each product includes details such as its name, description, images, stock,
  *       pricing, approval status, associated seller information, and reviews.
+ *       Approval status defaults to APPROVED
  *     tags:
  *       - Products
  *     parameters:

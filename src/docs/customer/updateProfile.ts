@@ -39,6 +39,10 @@
  *                 type: object
  *                 description: The customer's address as a JSON object.
  *                 example: { "street": "123 Main St", "city": "Anytown", "zip": "12345" }
+ *               subscribed:
+ *                 type: boolean
+ *                 description: Whether the customer is subscribed to the newsletter.
+ *                 example: false
  *             example:
  *               firstname: "John"
  *               lastname: "Doe"
