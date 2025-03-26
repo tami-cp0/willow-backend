@@ -38,6 +38,14 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
         }
         if (!user.isVerified) return next(new ErrorHandler(403, 'Account is not verified'));
 
+        if (req.originalUrl.includes('sellers') && user.role !== 'SELLER') {
+            return next(new ErrorHandler(403, 'Unauthorized route - cannot access with Customers account'));
+        }
+
+        if ((req.originalUrl.includes('customers') || req.originalUrl.includes('products')) && user.role !== 'CUSTOMER') {
+            return next(new ErrorHandler(403, 'Unauthorized route - cannot access with Sellers account'));
+        }
+        
         req.user = user;
 
         return next();

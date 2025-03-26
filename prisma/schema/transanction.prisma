@@ -13,6 +13,9 @@ model Transaction {
     totalAmount   Int      @map("total_amount")
     orderId       String   @unique  @map("order_id")
     order         Order   @relation(fields: [orderId], references: [id])
+      createdAt       DateTime   @default(now()) @map("created_at")
+
+    
 
     @@map("transactions")
 }

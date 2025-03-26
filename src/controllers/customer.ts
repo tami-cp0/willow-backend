@@ -20,7 +20,7 @@ import validateGetConversationWithMessagesDto from '../dtos/customer/getConversa
 import validateGetAIChatDto from '../dtos/customer/getAIChat.dto';
 import validatePostAIChatDto from '../dtos/customer/postAIChat.dto';
 import processUserQuery from '../utils/queryAI';
-import { Prisma, Recommendation } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import getNormalizedWeightedSum from '../utils/normalizeVector';
 
 type Image = {
@@ -204,7 +204,7 @@ export default class customerController {
 			const { userId, productId } = req.params;
 
 			const product = await prisma.product.findUnique({
-				where: { id: productId },
+				where: { id: productId, approvalStatus: 'APPROVED' },
 			});
 			if (!product) {
 				throw new ErrorHandler(404, 'Product not found');
@@ -632,11 +632,12 @@ export default class customerController {
 				result = await prisma.$executeRaw`
 					WITH selected_products AS (
 						SELECT id FROM products
+						WHERE approval_status = 'APPROVED'::"ApprovalStatus"
 						ORDER BY random()
 						LIMIT 5
 					)
 					INSERT INTO recommendations (product_id, customer_id, updated_at)
-					SELECT id, ${userId}, NOW() FROM selected_products
+					SELECT id, ${Prisma.sql`${userId}`}, NOW() FROM selected_products
 					WHERE (SELECT COUNT(*) FROM selected_products) = 5;
 				`;
 			} else {
@@ -687,25 +688,49 @@ export default class customerController {
 			if (typeof result !== "number") {
 				if (result.length !== 0) {
 					const normalizedEmbedding = getNormalizedWeightedSum(result);
-					const normalizedEmbeddingString = `[${normalizedEmbedding.join(",")}]`;
+					const normalizedEmbeddingArray = Prisma.sql`ARRAY[${Prisma.join(normalizedEmbedding)}]::vector`;
 
 					await prisma.$queryRaw`
 						WITH similar_products AS (
 							SELECT
-							*,
-							1 - (embedding <=> ${Prisma.sql`${normalizedEmbeddingString}`}) as similarity
+								*,
+								(embedding <=> ${normalizedEmbeddingArray}) AS similarity
 							FROM products
-							ORDER BY similarity DESC
+							WHERE approval_status = 'APPROVED'::"ApprovalStatus"
+							ORDER BY similarity ASC
 							LIMIT 5
 						)
 						INSERT INTO recommendations (product_id, customer_id, updated_at)
-						SELECT id, ${userId}, NOW() FROM similar_products
+						SELECT id, ${Prisma.sql`${userId}`}, NOW() FROM similar_products
 						WHERE (SELECT COUNT(*) FROM similar_products) = 5;
 					`;
 				}
 			}
 		} catch (error) {
 			throw new ErrorHandler(500, "Recommendations computation error");
+		}
+	}
+
+	// No DTO.
+	static async getRecommendations(req: Request, res: Response, next: NextFunction) {
+		try {
+			const userId = req.user.id;
+
+			const recommendations = await prisma.recommendation.findMany({
+				where: {
+					customerId: userId
+				},
+				include: {
+					product: true
+				}
+			});
+
+			res.status(200).json({
+				status: "success",
+				data: recommendations
+			});
+		} catch (error) {
+			next(error);
 		}
 	}
 }

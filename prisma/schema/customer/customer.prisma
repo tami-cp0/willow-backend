@@ -6,6 +6,7 @@ model Customer {
   lastname    String   @db.VarChar(20)
   address     Json?
   points      Int      @default(0)
+  createdAt       DateTime   @default(now()) @map("created_at")
   
   cart                 Cart?
   transanctions        Transaction[]

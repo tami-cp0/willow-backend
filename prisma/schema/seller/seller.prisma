@@ -12,6 +12,7 @@ model Seller {
   businessName    String   @unique @db.VarChar(20) @map("business_name")
   bio         String?   @db.VarChar(255)
   status      SellerStatus @default(PENDING)
+  createdAt       DateTime   @default(now()) @map("created_at")
 
   orders  OrderItem[]
   products Product[]
