@@ -110,42 +110,44 @@ export default class productController {
 
 			const userId = req.user.id;
 
-			// if it has already been viewed then update the viewedAt otherwise cerate it
-			await prisma.lastViewed.upsert({
-				where: {
-					customerId_productId: {
+			if (req.user.role === 'CUSTOMER') {
+				// if it has already been viewed then update the viewedAt otherwise cerate it
+				await prisma.lastViewed.upsert({
+					where: {
+						customerId_productId: {
+							customerId: userId,
+							productId: productId,
+						},
+					},
+					update: { viewedAt: new Date() },
+					create: {
 						customerId: userId,
 						productId: productId,
 					},
-				},
-				update: { viewedAt: new Date() },
-				create: {
-					customerId: userId,
-					productId: productId,
-				},
-			});
+				});
 
-			// After upserting, ensure there are no more than 5 records for this customer.
-			const lastViewedRecords = await prisma.lastViewed.findMany({
-				where: { customerId: userId },
-				orderBy: { viewedAt: 'desc' },
-			});
+				// After upserting, ensure there are no more than 5 records for this customer.
+				const lastViewedRecords = await prisma.lastViewed.findMany({
+					where: { customerId: userId },
+					orderBy: { viewedAt: 'desc' },
+				});
 
-			if (lastViewedRecords.length > 5) {
-				// Delete records beyond the 5 most recent ones.
-				const recordsToDelete = lastViewedRecords.slice(5);
-				await Promise.all(
-					recordsToDelete.map((record) =>
-						prisma.lastViewed.delete({
-							where: {
-								customerId_productId: {
-									customerId: record.customerId,
-									productId: record.productId,
+				if (lastViewedRecords.length > 5) {
+					// Delete records beyond the 5 most recent ones.
+					const recordsToDelete = lastViewedRecords.slice(5);
+					await Promise.all(
+						recordsToDelete.map((record) =>
+							prisma.lastViewed.delete({
+								where: {
+									customerId_productId: {
+										customerId: record.customerId,
+										productId: record.productId,
+									},
 								},
-							},
-						})
-					)
-				);
+							})
+						)
+					);
+				}
 			}
 
 			res.status(200).json({
