@@ -68,12 +68,11 @@ export const strictRateLimiter = rateLimit({
 
 /**
  * Limits requests to 10 per hour.
- * like for otp and emails
  */
 export const aiChatRateLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: 10,
     handler: (req, res, next) => rateLimitHandler(req, res, next, {
-        message: "You have exceeded your free limit, Try again in an hour."
+        message: "You have reached your limit, Try again in an hour."
     })
 });

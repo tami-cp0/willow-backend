@@ -571,7 +571,7 @@ export default class customerController {
 			const { userId } = req.params;
 			const { userQuery } = req.body;
 
-			const { text, history, instruction } = await processUserQuery(
+			const { response, history, instruction } = await processUserQuery(
 				userQuery,
 				userId
 			);
@@ -582,7 +582,7 @@ export default class customerController {
 			};
 			const newHistoryEntryModel = {
 				role: 'model',
-				parts: [{ text }],
+				parts: [{ text: response }],
 			};
 			const updatedHistory = [
 				...history,
@@ -606,9 +606,9 @@ export default class customerController {
 				data: { history: updatedHistory },
 			});
 
-			res.status(201).json({
+			res.status(200).json({
 				status: 'success',
-				data: text,
+				data: { response },
 			});
 		} catch (error) {
 			next(error);
