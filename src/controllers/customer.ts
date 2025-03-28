@@ -643,7 +643,8 @@ export default class customerController {
 						LIMIT 5
 					`;
 	
-					if (selectedProducts.length > 0) {
+					if (selectedProducts.length === 5) {
+						await tx.$executeRaw`DELETE FROM recommendations WHERE customer_id = ${userId}`
 						await tx.$executeRaw`
 							INSERT INTO recommendations (product_id, customer_id, updated_at)
 							VALUES ${Prisma.join(
@@ -662,7 +663,7 @@ export default class customerController {
 	
 				const interactions = await prisma.$queryRaw<{embedding: number[], weight: number}[]>`
 					SELECT 
-						p.embedding, 
+						p.embedding::float[], 
 						(lp.weight * EXP(-${decayRates.like} * EXTRACT(EPOCH FROM (NOW() - lp.created_at)) / 86400)) AS weight
 					FROM liked_products lp
 					JOIN products p ON lp.product_id = p.id
@@ -671,7 +672,7 @@ export default class customerController {
 					UNION ALL
 	
 					SELECT 
-						p.embedding, 
+						p.embedding::float[], 
 						(lv.weight * EXP(-${decayRates.view} * EXTRACT(EPOCH FROM (NOW() - lv.viewed_at)) / 86400)) AS weight
 					FROM last_viewed lv
 					JOIN products p ON lv.product_id = p.id
@@ -680,7 +681,7 @@ export default class customerController {
 					UNION ALL
 	
 					SELECT 
-						p.embedding, 
+						p.embedding::float[], 
 						(r.weight * EXP(-${decayRates.review} * EXTRACT(EPOCH FROM (NOW() - r.created_at)) / 86400)) AS weight
 					FROM reviews r
 					JOIN products p ON r.product_id = p.id
@@ -689,7 +690,7 @@ export default class customerController {
 					UNION ALL
 	
 					SELECT 
-						p.embedding, 
+						p.embedding::float[], 
 						(o.weight * EXP(-${decayRates.order} * EXTRACT(EPOCH FROM (NOW() - t.created_at)) / 86400)) AS weight
 					FROM orders o
 					JOIN transactions t ON o.id = t.order_id
@@ -714,9 +715,9 @@ export default class customerController {
 							)
 							SELECT id FROM similar_products;
 						`;
-	
-						// Insert available recommendations, IF there are at least 5 similar products
-						if (similarProducts.length > 4) {
+
+						if (similarProducts.length === 5) {
+							await tx.$executeRaw`DELETE FROM recommendations WHERE customer_id = ${userId}`
 							await tx.$executeRaw`
 								INSERT INTO recommendations (product_id, customer_id, updated_at)
 								VALUES ${Prisma.join(
