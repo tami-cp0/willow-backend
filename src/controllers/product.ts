@@ -37,7 +37,18 @@ export default class productController {
 					where,
 					skip,
 					take: limit,
-					include: { reviews: true, seller: true, orderItems: true },
+					include: {
+						reviews: true, seller: true,
+						orderItems: {
+							include: {
+								order: {
+									include: {
+										transaction: true
+									}
+								}
+							}
+						}
+					},
 				}),
 				prisma.product.count({ where }),
 			]);
@@ -115,7 +126,18 @@ export default class productController {
 
 			const product = await prisma.product.findUnique({
 				where: { id: productId, approvalStatus: 'APPROVED' },
-				include: { reviews: true, seller: true, orderItems: true },
+				include: {
+					reviews: true, seller: true,
+					orderItems: {
+						include: {
+							order: {
+								include: {
+									transaction: true
+								}
+							}
+						}
+					}
+				},
 			});
 
 			if (!product) {

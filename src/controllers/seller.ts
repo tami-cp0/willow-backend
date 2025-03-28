@@ -238,7 +238,18 @@ export default class sellerController {
 					where,
 					skip,
 					take: limit,
-					include: { reviews: true, seller: true, orderItems: true },
+					include: {
+						reviews: true, seller: true,
+						orderItems: {
+							include: {
+								order: {
+									include: {
+										transaction: true
+									}
+								}
+							}
+						}
+					},
 				}),
 				prisma.product.count({ where }),
 			]);
@@ -508,7 +519,15 @@ export default class sellerController {
 				include: {
 					reviews: true,
 					seller: true,
-					orderItems: true
+					orderItems: {
+						include: {
+							order: {
+								include: {
+									transaction: true
+								}
+							}
+						}
+					}
 				},
 			});
 
