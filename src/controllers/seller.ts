@@ -238,7 +238,7 @@ export default class sellerController {
 					where,
 					skip,
 					take: limit,
-					include: { reviews: true, seller: true },
+					include: { reviews: true, seller: true, orderItems: true },
 				}),
 				prisma.product.count({ where }),
 			]);
@@ -391,7 +391,6 @@ export default class sellerController {
 			});
 
 			const vetResponse: string = await vetProduct(product);
-			console.log(vetResponse);
 
 			const scoreMatch = vetResponse.match(
 				/Sustainability Score:\s*(\d{1,3})/ // Matches the score, considering potential leading spaces
@@ -509,6 +508,7 @@ export default class sellerController {
 				include: {
 					reviews: true,
 					seller: true,
+					orderItems: true
 				},
 			});
 
