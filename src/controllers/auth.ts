@@ -49,13 +49,13 @@ export default class authController {
             const accessToken: string = jwt.sign(
                 payload,
                 process.env.JWT_SECRET as string,
-                { expiresIn: '7d' }
-            ); // temporarily 7 days
+                { expiresIn: '12h' }
+            );
 
             const refreshToken: string = jwt.sign(
                 payload,
                 process.env.JWT_SECRET as string,
-                { expiresIn: '7d' }
+                { expiresIn: '12h' }
             );
 
             await Promise.all([
@@ -77,19 +77,19 @@ export default class authController {
             }
 
             res.cookie('accessToken', accessToken, {
-                maxAge: 7 * 24 * 60 * 60 * 1000,
+                maxAge: 12 * 60 * 60 * 1000,
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none'
-            }); // temporarily 7days
+            }); // 12 hours
 
             res.cookie('refreshToken', refreshToken, {
-                maxAge: 7 * 24 * 60 * 60 * 1000,
+                maxAge: 12 * 60 * 60 * 1000,
                 httpOnly: true,
                 secure: true,
                 path: '/api/v1/auth/refresh',
                 sameSite: 'none'
-            }); // 7d
+            }); // 12 hours
 
             const { refreshToken: _, password: __, lastKnownIp: ___, ...sanitizedUser } = user;
             res.status(200).json({
@@ -153,13 +153,13 @@ export default class authController {
             const accessToken: string = jwt.sign(
                 payload,
                 process.env.JWT_SECRET as string,
-                { expiresIn: '7d' }
-            ); // temporarily 7 days
+                { expiresIn: '12h' }
+            );
 
             const refreshToken: string = jwt.sign(
                 payload,
                 process.env.JWT_SECRET as string,
-                { expiresIn: '7d' }
+                { expiresIn: '12h' }
             );
 
             let data: any = { refreshToken, lastLoggedIn: new Date() };
@@ -189,19 +189,19 @@ export default class authController {
             }
 
             res.cookie('accessToken', accessToken, {
-                maxAge: 7 * 24 * 60 * 60 * 1000,
+                maxAge: 12 * 60 * 60 * 1000,
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none'
-            }); // temporarily 7 days
+            }); // 12 hours
 
             res.cookie('refreshToken', refreshToken, {
-                maxAge: 7 * 24 * 60 * 60 * 1000,
+                maxAge: 12 * 60 * 60 * 1000,
                 httpOnly: true,
                 secure: true,
                 path: '/api/v1/auth/refresh',
                 sameSite: 'none'
-            }); // 7d
+            }); // 12 hours
 
             const { refreshToken: _, password: __, lastKnownIp: ___, ...sanitizedUser } = user;
             res.status(200).json({
@@ -260,29 +260,29 @@ export default class authController {
       
           const payload: CustomJwtPayload = { id: user.id, role: user.role };
       
-          const newRefreshToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '7d' });
+          const newRefreshToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '12h' });
       
           await prisma.user.update({
             where: { id: user.id },
             data: { refreshToken: newRefreshToken },
           });          
       
-          const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '7d' }); // temporarily 7 days
+          const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '12h' });
       
           res.cookie('accessToken', newAccessToken, {
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            maxAge: 12 * 60 * 60 * 1000,
             httpOnly: true,
             secure: true,
             sameSite: 'none'
-          }); // temporarily 7 days
+          }); // 12 hours
 
           res.cookie('refreshToken', newRefreshToken, {
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            maxAge: 12 * 60 * 60 * 1000,
             httpOnly: true,
             secure: true,
             path: '/api/v1/auth/refresh',
             sameSite: 'none'
-          }); // 7d
+          }); // 12 hours
       
           res.status(200).json({
             status: 'success',
