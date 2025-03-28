@@ -31,7 +31,7 @@ export default class PaymentController {
 
 		try {
 			// amonut in NGN
-			const {
+			let {
 				email,
 				amount,
 				address,
@@ -47,12 +47,16 @@ export default class PaymentController {
 				return next(new ErrorHandler(403, 'Access denied'));
 			}
 
+			amount = JSON.parse(amount);
+			serviceFee = JSON.parse(serviceFee);
+			deliveryFee = JSON.parse(deliveryFee);
+
 			if (
 				!email ||
-				!amount ||
+				amount  == null ||
 				!address ||
-				!serviceFee ||
-				!deliveryFee
+				serviceFee == null ||
+				deliveryFee == null
 			) {
 				return next(
 					new ErrorHandler(
