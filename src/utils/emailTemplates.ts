@@ -1,5 +1,5 @@
 export const otpEmailTemplate = [
-	'Acconut verification',
+	'Account Verification',
 	`
 <html lang="en">
 <head>
