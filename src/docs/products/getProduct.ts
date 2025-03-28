@@ -143,6 +143,14 @@
  *                             type: string
  *                             format: date-time
  *                             example: "2025-02-27T11:00:00Z"
+ *                     orderItems:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             example: "orderItem789"
  *       400:
  *         description: Validation error or bad request.
  *         content:
