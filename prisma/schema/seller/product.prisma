@@ -10,6 +10,7 @@ enum Sourcing {
 }
 
 enum Packaging {
+  PLASTIC_BAG
   PLASTIC_FREE          // "Plastic-Free" Broad, encompassing no plastic
   BIODEGRADABLE         // "Biodegradable Packaging" Clear and direct
   RECYCLED_PAPER        // "Recycled Paper",Specific and understandable
