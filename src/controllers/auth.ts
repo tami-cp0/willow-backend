@@ -55,7 +55,7 @@ export default class authController {
             const refreshToken: string = jwt.sign(
                 payload,
                 process.env.JWT_SECRET as string,
-                { expiresIn: '12h' }
+                { expiresIn: '7d' }
             );
 
             await Promise.all([
@@ -84,12 +84,12 @@ export default class authController {
             }); // 12 hours
 
             res.cookie('refreshToken', refreshToken, {
-                maxAge: 12 * 60 * 60 * 1000,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
                 secure: true,
                 path: '/api/v1/auth/refresh',
                 sameSite: 'none'
-            }); // 12 hours
+            }); // 7 days
 
             const { refreshToken: _, password: __, lastKnownIp: ___, ...sanitizedUser } = user;
             res.status(200).json({
@@ -159,7 +159,7 @@ export default class authController {
             const refreshToken: string = jwt.sign(
                 payload,
                 process.env.JWT_SECRET as string,
-                { expiresIn: '12h' }
+                { expiresIn: '7d' }
             );
 
             let data: any = { refreshToken, lastLoggedIn: new Date() };
@@ -196,12 +196,12 @@ export default class authController {
             }); // 12 hours
 
             res.cookie('refreshToken', refreshToken, {
-                maxAge: 12 * 60 * 60 * 1000,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
                 secure: true,
                 path: '/api/v1/auth/refresh',
                 sameSite: 'none'
-            }); // 12 hours
+            }); // 7 days
 
             const { refreshToken: _, password: __, lastKnownIp: ___, ...sanitizedUser } = user;
             res.status(200).json({
@@ -260,7 +260,7 @@ export default class authController {
       
           const payload: CustomJwtPayload = { id: user.id, role: user.role };
       
-          const newRefreshToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '12h' });
+          const newRefreshToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '7d' });
       
           await prisma.user.update({
             where: { id: user.id },
@@ -277,12 +277,12 @@ export default class authController {
           }); // 12 hours
 
           res.cookie('refreshToken', newRefreshToken, {
-            maxAge: 12 * 60 * 60 * 1000,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true,
             secure: true,
             path: '/api/v1/auth/refresh',
             sameSite: 'none'
-          }); // 12 hours
+          }); // 7 days
       
           res.status(200).json({
             status: 'success',
