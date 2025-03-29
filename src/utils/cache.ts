@@ -139,7 +139,7 @@ class RedisClient {
 		try {
 			const key = `user-${user.id}`;
 			const value = JSON.stringify(user);
-			await this.client.set(key, value, { EX: 5 * 60 });
+			await this.client.set(key, value, { EX: 12 * 60 * 60 });
 		} catch (error) {
 			console.error(error);
 			return new ErrorHandler(500, 'Internal server error - Failed to store user info.');
