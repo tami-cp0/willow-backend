@@ -25,7 +25,7 @@ enum Packaging {
   PAPERBOARD_BOX        // "Paperboard Box", More specific than just 'paper' or 'cardboard'
   BAMBOO_PACKAGING      // "Bamboo Packaging", Specific eco-friendly material
   ALUMINUM_CONTAINER    // "Aluminum Container", Specific metal container - often recyclable
-  OTHER_ECO_FRIENDLY    // "Other Eco-Friendly", Catch-all for less common but valid options
+  OTHER
   UNKNOWN_PACKAGING     // "Unknown Packaging", Important for sellers who are unsure or haven't specified
 }
 
