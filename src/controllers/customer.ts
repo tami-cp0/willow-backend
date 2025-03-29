@@ -663,7 +663,7 @@ export default class customerController {
 	
 				const interactions = await prisma.$queryRaw<{embedding: number[], weight: number}[]>`
 					SELECT 
-						p.embedding::float[], 
+						string_to_array(trim(both '[]' from p.embedding::text), ',')::double precision[] AS embedding, 
 						(lp.weight * EXP(-${decayRates.like} * EXTRACT(EPOCH FROM (NOW() - lp.created_at)) / 86400)) AS weight
 					FROM liked_products lp
 					JOIN products p ON lp.product_id = p.id
@@ -672,7 +672,7 @@ export default class customerController {
 					UNION ALL
 	
 					SELECT 
-						p.embedding::float[], 
+						string_to_array(trim(both '[]' from p.embedding::text), ',')::double precision[] AS embedding, 
 						(lv.weight * EXP(-${decayRates.view} * EXTRACT(EPOCH FROM (NOW() - lv.viewed_at)) / 86400)) AS weight
 					FROM last_viewed lv
 					JOIN products p ON lv.product_id = p.id
@@ -681,7 +681,7 @@ export default class customerController {
 					UNION ALL
 	
 					SELECT 
-						p.embedding::float[], 
+						string_to_array(trim(both '[]' from p.embedding::text), ',')::double precision[] AS embedding, 
 						(r.weight * EXP(-${decayRates.review} * EXTRACT(EPOCH FROM (NOW() - r.created_at)) / 86400)) AS weight
 					FROM reviews r
 					JOIN products p ON r.product_id = p.id
@@ -690,7 +690,7 @@ export default class customerController {
 					UNION ALL
 	
 					SELECT 
-						p.embedding::float[], 
+						string_to_array(trim(both '[]' from p.embedding::text), ',')::double precision[] AS embedding, 
 						(o.weight * EXP(-${decayRates.order} * EXTRACT(EPOCH FROM (NOW() - t.created_at)) / 86400)) AS weight
 					FROM orders o
 					JOIN transactions t ON o.id = t.order_id
@@ -707,7 +707,7 @@ export default class customerController {
 							WITH similar_products AS (
 								SELECT
 									id,
-									(embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(normalizedEmbedding.map(String))}]::vector`}) AS similarity
+									(embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(normalizedEmbedding)}]::vector`}) AS similarity
 								FROM products
 								WHERE approval_status = 'APPROVED'::\"ApprovalStatus\"
 								ORDER BY similarity ASC
