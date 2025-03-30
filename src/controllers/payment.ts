@@ -47,9 +47,9 @@ export default class PaymentController {
 				return next(new ErrorHandler(403, 'Access denied'));
 			}
 
-			amount = JSON.parse(amount);
-			serviceFee = JSON.parse(serviceFee);
-			deliveryFee = JSON.parse(deliveryFee);
+			amount = amount ? JSON.parse(amount) : undefined;
+			serviceFee = serviceFee ? JSON.parse(serviceFee) : undefined;
+			deliveryFee = deliveryFee ? JSON.parse(deliveryFee) : undefined;
 
 			if (
 				!email ||
