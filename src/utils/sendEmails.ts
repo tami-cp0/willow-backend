@@ -3,7 +3,7 @@ import { config } from 'dotenv';
 import cache from './cache';
 import { ErrorHandler } from './errorHandler';
 import { Product } from '@prisma/client';
-import { newLoginLocationEmailTemplate, newProductSubmissionWithCertificateEmailTemplate, otpEmailTemplate, passwordResetEmailTemplate, paymentSuccessEmailTemplate, productOutcomeEmailTemplates } from './emailTemplates';
+import { newLoginLocationEmailTemplate, newProductSubmissionWithCertificateEmailTemplate, otpEmailTemplate, passwordResetEmailTemplate, paymentSuccessEmailTemplate, productOutcomeEmailTemplates, unreadMessageEmailTemplate } from './emailTemplates';
 
 config();
 
@@ -19,14 +19,15 @@ const generateOTP = (length = 6): string => {
 	return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-type EmailType = 'login_location' | 'password_reset' | 'otp' | 'certificate' | 'payment' | {rejection?: boolean, inconclusive?: boolean, mismatch?: boolean, certificate?: boolean, success?: boolean};
+type EmailType = 'login_location' | 'password_reset' | 'otp' | 'certificate' | 'payment' | 'message' | {rejection?: boolean, inconclusive?: boolean, mismatch?: boolean, certificate?: boolean, success?: boolean};
 export async function sendEmail(
 	type: EmailType,
 	email: string,
 	ip?: string,
 	resetToken?: string,
 	product?: Product | null,
-    payment?: { orderId?: string, transferRef?: string, amount: number }
+    payment?: { orderId?: string, transferRef?: string, amount: number } | null,
+	conversation?: { id: string, senderName: string } | null,
 ) {
 	try {
 		let html: string[] = otpEmailTemplate; // default
@@ -108,7 +109,12 @@ export async function sendEmail(
                 html = productOutcomeEmailTemplates.success;
                 html[1] = html[1].replace('<product_name>', name).replace('<product_image>', url);
             }
-        }
+        } else if (type === 'message') {
+			html = unreadMessageEmailTemplate;
+			html[1] = html[1]
+				.replace('<seller>', conversation?.senderName as string)
+				.replace('<conversation_id>', conversation?.id as string);
+		}
 
 		const transporter = nodemailer.createTransport({
 			service: 'gmail',
