@@ -63,9 +63,24 @@ export default class sellerController {
 				user.avatar = avatar;
 			}
 
+			let conversationId: string | undefined;
+			if (req.body && req.query.customerId) {
+				const customerId = req.query.customerId as string;
+
+				const conversation = await prisma.conversation.findUnique({
+					where: {
+						customerId_sellerId: { customerId, sellerId: userId },
+					},
+				});
+
+				if (conversation) {
+					conversationId = conversation.id;
+				}
+			}
+
 			res.status(200).json({
 				status: 'success',
-				data: user,
+				data: { user, conversationId}
 			});
 		} catch (error) {
 			next(error);
