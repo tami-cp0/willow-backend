@@ -27,8 +27,8 @@ model User {
   seller      Seller?
   admin       Admin?
 
-  // sentMessages     Message[] @relation("MessageSender")
-  // receivedMessages Message[] @relation("MessageReceiver")
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
 
   helptickets      HelpTicket[]
 
