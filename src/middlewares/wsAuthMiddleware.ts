@@ -48,8 +48,6 @@ export default async function wsAuthMiddleware(
         ws.close(1000, 'Account is not verified');
         return null;
       }
-      
-      await cache.storeUser(user);
     }
     
     return user;
