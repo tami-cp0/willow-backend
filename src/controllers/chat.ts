@@ -1,6 +1,7 @@
 import { WebSocket } from 'ws';
 import prisma from '../app';
 import { User, Role } from '@prisma/client';
+import { sendEmail } from '../utils/sendEmails';
 
 // Track active connections, temporarily in-memory
 const activeConnections: Map<string, WebSocket> = new Map();
@@ -8,11 +9,16 @@ const activeConnections: Map<string, WebSocket> = new Map();
 export default class ChatController {
   // Set up connection and event handlers
   static setupConnection(ws: WebSocket, user: User) {
+    // delete before setting
+    if (activeConnections.has(user.id)) {
+      activeConnections.get(user.id)?.close();
+      activeConnections.delete(user.id);
+    }
     activeConnections.set(user.id, ws);
 
     // Set up ping/pong to keep connection alive
     const pingInterval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
+      if (ws.readyState === 1) {
         ws.ping();
       } else {
         activeConnections.delete(user.id);
@@ -149,7 +155,9 @@ export default class ChatController {
           senderId: user.id,
           receiverId: recipientId,
           content,
-        }
+        },
+        // include: {
+        // }
       });
 
       // Format the response
@@ -170,11 +178,14 @@ export default class ChatController {
 
       // Send message to the recipient if they're online
       const recipientWs = activeConnections.get(recipientId);
-      if (recipientWs && recipientWs.readyState === WebSocket.OPEN) {
+      if (recipientWs && recipientWs.readyState === 1) {
         recipientWs.send(JSON.stringify({
           type: 'message',
           data: messageResponse
         }));
+      } else {
+        // send email notification
+        // sendEmail();
       }
 
     } catch (error) {
