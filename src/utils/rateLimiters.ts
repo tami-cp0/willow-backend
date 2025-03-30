@@ -73,6 +73,6 @@ export const aiChatRateLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: 10,
     handler: (req, res, next) => rateLimitHandler(req, res, next, {
-        message: "You have reached your limit, Try again in an hour."
+        message: "You have reached your limit, Try again in an hour"
     })
 });
