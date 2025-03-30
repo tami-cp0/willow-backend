@@ -260,3 +260,41 @@ export const productOutcomeEmailTemplates = {
     `
   ]
 };
+
+export const unreadMessageEmailTemplate = [
+  'You Have an Unread Message',
+  `
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Unread Message</title>
+      <style>
+          body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+          .container { max-width: 600px; background: #fff; padding: 20px; margin: 0 auto; border-radius: 5px; }
+          .message-info { background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+          .btn {
+              display: inline-block;
+              padding: 10px 20px;
+              background-color: #28a745;
+              color: #fff;
+              text-decoration: none;
+              border-radius: 5px;
+              margin-top: 20px;
+          }
+          .footer { font-size: 12px; color: #777; text-align: center; margin-top: 20px; }
+      </style>
+  </head>
+  <body>
+      <div class="container">
+          <p>You have a new unread message from <strong><seller></strong>.</p>
+          <p>Please click the button below to view your conversation.</p>
+          <a class="btn" href="<conversation_link>">View Conversation</a>
+          <div class="footer">
+              &copy; 2025 Willow
+          </div>
+      </div>
+  </body>
+  </html>
+  `,
+];
