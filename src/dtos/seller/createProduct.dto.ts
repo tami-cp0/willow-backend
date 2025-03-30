@@ -61,10 +61,10 @@ async function validateCreateProductDto(req: Request): Promise<void> {
     throw new ErrorHandler(400, 'Product Images are required');
   }
 
-  req.body.onDemand = JSON.parse(req.body.onDemand);
-  req.body.price = JSON.parse(req.body.price);
-  req.body.inStock = JSON.parse(req.body.inStock);
-  req.body.sustainabilityFeatures = JSON.parse(req.body.sustainabilityFeatures);
+  req.body.onDemand = req.body.onDemand ? JSON.parse(req.body.onDemand) : undefined;
+  req.body.price = req.body.price ? JSON.parse(req.body.price) : undefined;
+  req.body.inStock = req.body.inStock ? JSON.parse(req.body.inStock) : undefined;
+  req.body.sustainabilityFeatures = req.body.sustainabilityFeatures ? JSON.parse(req.body.sustainabilityFeatures) : undefined;  
 
   if (req.body.onDemand === true) {
     // remove inStock if onDemand is true
