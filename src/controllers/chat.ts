@@ -156,8 +156,10 @@ export default class ChatController {
           receiverId: recipientId,
           content,
         },
-        // include: {
-        // }
+        include: {
+          receiver: true,
+          sender: true
+        }
       });
 
       // Format the response
@@ -184,8 +186,8 @@ export default class ChatController {
           data: messageResponse
         }));
       } else {
-        // send email notification
-        // sendEmail();
+        let senderName = user.role === Role.CUSTOMER ? (user as any)?.customer?.lastname : (user as any)?.seller?.businessName;
+        sendEmail('message', newMessage.receiver.email, '', '', null, null, { id: newMessage.conversationId, senderName });
       }
 
     } catch (error) {
