@@ -13,16 +13,21 @@ export default function createChatRouter(wsInstance: expressWs.Instance) {
 
   // Define your WebSocket endpoint
   (chatRouter as any).ws('/connect', async (ws: WebSocket, req: Request) => {
+    console.log(1)
     const user = await wsAuthMiddleware(ws, req);
+    console.log(2)
     if (!user) return; // Connection closed by middleware if auth fails
-
+    console.log(3)
     // Set up the connection for chat
+
     ChatController.setupConnection(ws, user);
+    console.log(4)
 
     // Listen for incoming messages
     ws.on('message', async (msg: string) => {
       await ChatController.handleMessage(ws, msg.toString(), user);
     });
+    console.log(5)
   });
 
   return chatRouter;
