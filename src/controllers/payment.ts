@@ -37,7 +37,7 @@ export default class PaymentController {
 				address,
 				serviceFee,
 				deliveryFee,
-			} = req.body; // cartItems = [{ sellerId, productId, quantity, price }, ...]
+			} = req.body;
 			const userId = req.user.id;
 
 			if (userId !== req.params.userId || req.user.email !== email) {
@@ -58,10 +58,11 @@ export default class PaymentController {
 				serviceFee == null ||
 				deliveryFee == null
 			) {
+				console.log(req.body)
 				return next(
 					new ErrorHandler(
 						400,
-						'One of the fields is missing (email, amount, address, cartItems, serviceFee, deliveryFee)'
+						'One of the fields is missing (email, amount, address, serviceFee, deliveryFee)'
 					)
 				);
 			}
