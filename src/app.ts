@@ -15,7 +15,7 @@ config();
 
 const app = express();
 
-const wsInstance = expressWs(app);
+const wsInstance = expressWs(app, undefined, { leaveRouterUntouched: true });
 
 const port: number = Number(process.env.PORT) || 3000;
 const host: string = '0.0.0.0';
