@@ -137,6 +137,14 @@ export default class authController {
 
             if (!user.isVerified) return next(new ErrorHandler(403, "Account is not verified"));
 
+            // stop previous job
+            if (user.role === 'CUSTOMER') {
+                let job = getJob(user.id);
+                if (job) {
+                    job.stop()
+                }
+            }
+
             // logout user from other sessions.
             await Promise.all([
                 prisma.user.update({
