@@ -58,7 +58,7 @@ export default class sellerController {
 				avatar.url = await getSignedUrlForFile(
 					'avatars',
 					avatar.key,
-					604800
+					600000
 				); // 7 days
 				user.avatar = avatar;
 			}
