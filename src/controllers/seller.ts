@@ -208,7 +208,17 @@ export default class sellerController {
 		try {
 			await validateUpdateOrderStatusDto(req);
 
-			let data: any = { SellerStatus: req.body.status };
+			let data: any = { sellerStatus: req.body.status };
+
+			// Define customerStatus based on sellerStatus
+			if (req.body.status === 'NEW') {
+				data.customerStatus = 'ORDERED';
+			} else if (req.body.status === 'SHIPPED') {
+				data.customerStatus = 'SHIPPED';
+			} else if (req.body.status === 'DELIVERED') {
+				data.customerStatus = 'DELIVERED';
+			}
+
 			if (req.body.status === 'CANCELLED') {
 				data.sellerCancelMessage = req.body.cancelMessage;
 			}
