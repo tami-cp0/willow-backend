@@ -188,7 +188,7 @@ export default class ChatController {
         }));
       } else {
         let senderName = user.role === Role.CUSTOMER ? (user as any)?.customer?.lastname : (user as any)?.seller?.businessName;
-        sendEmail('message', newMessage.receiver.email, '', '', null, null, { id: newMessage.conversationId, senderName });
+        sendEmail('message', newMessage.receiver.email, '', '', null, null, { id: newMessage.conversationId, senderName, role: user.role });
       }
 
     } catch (error) {

@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { config } from 'dotenv';
 import cache from './cache';
 import { ErrorHandler } from './errorHandler';
-import { Product } from '@prisma/client';
+import { Product, Role } from '@prisma/client';
 import { newLoginLocationEmailTemplate, newProductSubmissionWithCertificateEmailTemplate, otpEmailTemplate, passwordResetEmailTemplate, paymentSuccessEmailTemplate, productOutcomeEmailTemplates, unreadMessageEmailTemplate } from './emailTemplates';
 
 config();
@@ -27,7 +27,7 @@ export async function sendEmail(
 	resetToken?: string,
 	product?: Product | null,
     payment?: { orderId?: string, transferRef?: string, amount: number } | null,
-	conversation?: { id: string, senderName: string } | null,
+	conversation?: { id: string, senderName: string, role?: string } | null,
 ) {
 	try {
 		let html: string[] = otpEmailTemplate; // default
@@ -113,7 +113,9 @@ export async function sendEmail(
 			html = unreadMessageEmailTemplate;
 			html[1] = html[1]
 				.replace('<seller>', conversation?.senderName as string)
-				.replace('<conversation_id>', conversation?.id as string);
+				.replace('<chat_url>',
+					conversation?.role === Role.SELLER ? `${process.env.FRONTEND_URL}/dashboard/chats` : `${process.env.FRONTEND_URL}/shop/chats`
+				);
 		}
 
 		const transporter = nodemailer.createTransport({
