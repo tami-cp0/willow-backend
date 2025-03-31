@@ -595,11 +595,12 @@ export default class sellerController {
 				where: { id: productId },
 			});
 
-			res.status(204).json({
+			res.status(200).json({
 				status: "success",
 				message: "Product has been delisted successfully",
 			});
 		} catch (error) {
+			console.error(error);
 			next(error);
 		}
 	}
