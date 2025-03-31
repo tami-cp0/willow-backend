@@ -25,7 +25,7 @@ export default class ChatController {
         activeConnections.delete(user.id);
         clearInterval(pingInterval);
       }
-    }, 30000);
+    }, 5000);
 
     ws.on('close', () => {
         activeConnections.delete(user.id);
