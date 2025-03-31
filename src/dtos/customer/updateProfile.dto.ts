@@ -27,7 +27,7 @@ async function validateUpdateCustomerProfileDto(req: Request): Promise<void> {
         throw new ErrorHandler(403, 'Access denied');
       }
       
-  req.body.subscribed = JSON.parse(req.body.subscribed);
+  req.body.subscribed = req.body.subscribed ? JSON.parse(req.body.subscribed) : undefined;
 
   // Validate the request body against the DTO
   const dtoInstance = plainToInstance(UpdateCustomerProfileDto, req.body);
