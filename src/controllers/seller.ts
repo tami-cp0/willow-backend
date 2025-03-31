@@ -182,7 +182,8 @@ export default class sellerController {
 				},
 				include: {
 					product: true,
-					order: { include: { transaction: true } },
+					order: { include: { transaction: true, customer: true } },
+					
 				},
 			});
 
