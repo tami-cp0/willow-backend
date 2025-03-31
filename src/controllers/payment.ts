@@ -106,12 +106,16 @@ export default class PaymentController {
 			const accessCode = parsedData.data.access_code;
 
 			// get cart items
-			const cart = await prisma.cart.findMany({
+			const cart = await prisma.cart.findUnique({
 				where: {
 					customerId: userId
 				},
 				include: {
-					cartItems: true
+					cartItems: {
+						include: {
+							product: true
+						}
+					}
 				}
 			}) as any;
 
