@@ -190,7 +190,7 @@ export default class customerController {
 			});
 
 			if (!product) {
-				next(new ErrorHandler(404, 'Cart item is no longer in cart'));
+				return next(new ErrorHandler(404, 'Cart item is no longer in cart'));
 			}
 
 			// Delete the cart item using the composite unique key.
