@@ -180,6 +180,16 @@ export default class customerController {
 			await validateDeleteCartItemDto(req);
 			const { userId, productId } = req.params;
 
+			const product = await prisma.product.findUnique({
+				where: {
+					id: productId
+				},
+			});
+
+			if (!product) {
+				next(new ErrorHandler(404, 'Product not found'));
+			}
+
 			// Delete the cart item using the composite unique key.
 			await prisma.cartItem.delete({
 				where: {
