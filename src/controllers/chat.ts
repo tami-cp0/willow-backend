@@ -4,7 +4,7 @@ import { User, Role } from '@prisma/client';
 import { sendEmail } from '../utils/sendEmails';
 
 // Track active connections, temporarily in-memory
-const activeConnections: Map<string, WebSocket> = new Map();
+export const activeConnections: Map<string, WebSocket> = new Map();
 
 export default class ChatController {
   // Set up connection and event handlers
@@ -21,6 +21,7 @@ export default class ChatController {
       if (ws.readyState === 1) {
         ws.ping();
       } else {
+        activeConnections.get(user.id)?.close();
         activeConnections.delete(user.id);
         clearInterval(pingInterval);
       }

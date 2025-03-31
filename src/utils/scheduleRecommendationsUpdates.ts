@@ -1,6 +1,7 @@
 import cron, { ScheduledTask } from 'node-cron';
 import cache from './cache';
 import customerController from '../controllers/customer';
+import { activeConnections } from '../controllers/chat';
 
 const jobRegistry = new Map<string, ScheduledTask>();
 
@@ -37,7 +38,7 @@ export function deleteJob(userId: string): void {
 /**
  * Schedules a cron job to update recommendations for a user every 5 minutes.
  *
- * The job checks the cache for the user's activity; if the user is inactive, the job stops.
+ * The job checks the cache for the user's activity; if the user is inactive, it closes users active web socket and the job stops.
  * Otherwise, it triggers the computeRecommendations function to update recommendations.
  *
  * @param userId - The unique identifier of the user.
@@ -52,6 +53,12 @@ export async function scheduleRecommendationUpdates(userId: string) {
           console.log(`User ${userId} inactive. Stopping recommendation updates.`);
           deleteJob(userId)
           job.stop();
+
+          // Close the user's active WebSocket connection
+          if (activeConnections.has(userId)) {
+            activeConnections.get(userId)?.close();
+            activeConnections.delete(userId);
+          }
           return;
         }
 

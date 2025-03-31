@@ -14,6 +14,7 @@ import { User } from "@prisma/client";
 import validateForgotPasswordDto from "../dtos/auth/forgotPassword.dto";
 import validateResetPasswordDto from "../dtos/auth/resetPassword.dto";
 import { deleteJob, getJob, scheduleRecommendationUpdates } from "../utils/scheduleRecommendationsUpdates";
+import { activeConnections } from "./chat";
 
 config();
 
@@ -240,6 +241,11 @@ export default class authController {
                 if (job) {
                     job.stop()
                 }
+            }
+
+            if (activeConnections.has(req.user.id)) {
+                activeConnections.get(req.user.id)?.close();
+                activeConnections.delete(req.user.id);
             }
     
             res.status(204).end();
