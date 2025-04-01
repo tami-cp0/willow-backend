@@ -37,6 +37,7 @@ export default class PaymentController {
 				address,
 				serviceFee,
 				deliveryFee,
+				cartItems,
 			} = req.body;
 			const userId = req.user.id;
 
@@ -56,13 +57,16 @@ export default class PaymentController {
 				amount  == null ||
 				!address ||
 				serviceFee == null ||
-				deliveryFee == null
+				deliveryFee == null ||
+				!cartItems ||
+				!Array.isArray(cartItems) ||
+				cartItems.length === 0
 			) {
 				console.log(req.body)
 				return next(
 					new ErrorHandler(
 						400,
-						'One of the fields is missing (email, amount, address, serviceFee, deliveryFee)'
+						'One of the fields is missing (email, amount, address, serviceFee, deliveryFee, cartItems)'
 					)
 				);
 			}
@@ -105,21 +109,21 @@ export default class PaymentController {
 			const reference = parsedData.data.reference;
 			const accessCode = parsedData.data.access_code;
 
-			// get cart items
-			const cart = await prisma.cart.findUnique({
-				where: {
-					customerId: userId
-				},
-				include: {
-					cartItems: {
-						include: {
-							product: true
-						}
-					}
-				}
-			}) as any;
+			// // get cart items
+			// const cart = await prisma.cart.findUnique({
+			// 	where: {
+			// 		customerId: userId
+			// 	},
+			// 	include: {
+			// 		cartItems: {
+			// 			include: {
+			// 				product: true
+			// 			}
+			// 		}
+			// 	}
+			// }) as any;
 
-			const cartItems: CartItem[] = cart.cartItems
+			// const cartItems: CartItem[] = cart.cartItems
 
 			// Create the order, order items, and transaction in one Prisma query
 			const order = await prisma.order.create({
