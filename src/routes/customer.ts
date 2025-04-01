@@ -27,7 +27,7 @@ customerRouter.route('/:userId/orders').get(minimalRateLimiter, authMiddleware, 
 customerRouter.route('/:userId/orders/:orderId').get(minimalRateLimiter, authMiddleware, customerController.getOrder);
 
 customerRouter.route('/:userId/ai-conversation').get(minimalRateLimiter, authMiddleware, customerController.getAIChat);
-customerRouter.route('/:userId/ai-conversation').post(aiChatRateLimiter, authMiddleware, customerController.postAIChat);
+customerRouter.route('/:userId/ai-conversation').post(authMiddleware, customerController.postAIChat);
 
 customerRouter.route('/:userId/products/:productId/reviews').post(moderateRateLimiter, authMiddleware, customerController.createReview);
 customerRouter.route('/:userId/products/:productId/reviews/:reviewId').delete(moderateRateLimiter, authMiddleware, customerController.deleteReview);
