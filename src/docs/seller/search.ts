@@ -1,6 +1,6 @@
 /**
  * @openapi
- * /{userId}/catalogue/search:
+ * /sellers/{userId}/catalogue/search:
  *   get:
  *     summary: Search a seller's product catalogue
  *     description: >

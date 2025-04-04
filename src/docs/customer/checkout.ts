@@ -49,7 +49,6 @@
  *               - email
  *               - amount
  *               - address
- *               - cartItems
  *               - serviceFee
  *               - deliveryFee
  *     responses:

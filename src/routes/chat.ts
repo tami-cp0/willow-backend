@@ -15,9 +15,15 @@ export default function createChatRouter(wsInstance: expressWs.Instance) {
   (chatRouter as any).ws('/connect', async (ws: WebSocket, req: Request) => {
     const user = await wsAuthMiddleware(ws, req);
     if (!user) return; // Connection closed by middleware if auth fails
-
     // Set up the connection for chat
+
+
     ChatController.setupConnection(ws, user);
+    console.log(`user: ${user.id} connected`);
+
+    ws.on('pong', () => {
+      console.log('Pong received! The ping was successful.');
+    });
 
     // Listen for incoming messages
     ws.on('message', async (msg: string) => {

@@ -2,9 +2,9 @@ model Message {
   id              String     @id @default(ulid())
   conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId  String     @map("conversation_id")
-//   sender          User       @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  sender          User       @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   senderId        String     @map("sender_id")
-//   receiver        User       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiver        User       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
   receiverId      String     @map("receiver_id")
   content         String
   images          Json?

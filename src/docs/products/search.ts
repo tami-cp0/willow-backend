@@ -1,6 +1,6 @@
 /**
  * @openapi
- * /search:
+ * /products/search:
  *   get:
  *     summary: Search for products
  *     description: >

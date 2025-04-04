@@ -58,14 +58,29 @@ export default class sellerController {
 				avatar.url = await getSignedUrlForFile(
 					'avatars',
 					avatar.key,
-					604800
+					600000
 				); // 7 days
 				user.avatar = avatar;
 			}
 
+			let conversationId: string | undefined;
+			if (req.body && req.query.customerId) {
+				const customerId = req.query.customerId as string;
+
+				const conversation = await prisma.conversation.findUnique({
+					where: {
+						customerId_sellerId: { customerId, sellerId: userId },
+					},
+				});
+
+				if (conversation) {
+					conversationId = conversation.id;
+				}
+			}
+
 			res.status(200).json({
 				status: 'success',
-				data: user,
+				data: { user, conversationId}
 			});
 		} catch (error) {
 			next(error);
@@ -167,7 +182,8 @@ export default class sellerController {
 				},
 				include: {
 					product: true,
-					order: { include: { transaction: true } },
+					order: { include: { transaction: true, customer: true } },
+					
 				},
 			});
 
@@ -192,7 +208,17 @@ export default class sellerController {
 		try {
 			await validateUpdateOrderStatusDto(req);
 
-			let data: any = { SellerStatus: req.body.status };
+			let data: any = { sellerStatus: req.body.status };
+
+			// Define customerStatus based on sellerStatus
+			if (req.body.status === 'NEW') {
+				data.customerStatus = 'ORDERED';
+			} else if (req.body.status === 'SHIPPED') {
+				data.customerStatus = 'SHIPPED';
+			} else if (req.body.status === 'DELIVERED') {
+				data.customerStatus = 'DELIVERED';
+			}
+
 			if (req.body.status === 'CANCELLED') {
 				data.sellerCancelMessage = req.body.cancelMessage;
 			}
@@ -238,7 +264,18 @@ export default class sellerController {
 					where,
 					skip,
 					take: limit,
-					include: { reviews: true, seller: true },
+					include: {
+						reviews: true, seller: true,
+						orderItems: {
+							include: {
+								order: {
+									include: {
+										transaction: true
+									}
+								}
+							}
+						}
+					},
 				}),
 				prisma.product.count({ where }),
 			]);
@@ -268,7 +305,7 @@ export default class sellerController {
 	static async searchProducts(req: Request, res: Response, next: NextFunction) {
 		const text = req.query.text as string;
 		const userId = req.params.userId
-		const approvalStatus = req.query.approvalStatus || 'APPROVED'; // Default to 'APPROVED'
+		const approvalStatus = req.query.approvalStatus;
 		const page = Number(req.query.page as string) || 1;
 		const limit = Number(req.query.limit as string) || 20;
 		const offset = (page - 1) * limit;
@@ -280,21 +317,26 @@ export default class sellerController {
 			const embedding = await generateProductEmbedding(undefined, text);
 	
 			const embeddingVector = Prisma.sql`ARRAY[${Prisma.join(embedding)}]::vector`;
-	
-			const products = await prisma.$queryRaw`
-				SELECT *, similarity
-				FROM (
-					SELECT *, (embedding <=> ${embeddingVector}) AS similarity
+
+            const products = await prisma.$queryRaw`
+				WITH ranked_products AS (
+					SELECT id, name, description, images, in_stock, on_demand, category, options, price,
+						sold_out, approval_status, packaging, 
+						created_at, updated_at, end_of_life_info, sourcing, sustainability_score, 
+						sustainability_score_reason, sustainability_tag, certification, seller_id,
+						(1 - (embedding <=> ${embeddingVector}))::float AS similarity
 					FROM products
-					WHERE approval_status = ${Prisma.sql`${approvalStatus}`}::"ApprovalStatus"
+					WHERE (${Prisma.sql`${approvalStatus}`} IS NULL OR approval_status = ${Prisma.sql`${approvalStatus}`}::"ApprovalStatus")
+					AND embedding IS NOT NULL
 					AND seller_id = ${Prisma.sql`${userId}`}
-				) sub
-				ORDER BY similarity ASC
+				)
+				SELECT * FROM ranked_products
+				WHERE similarity > 0.5
+				ORDER BY similarity DESC
 				LIMIT ${Prisma.sql`${limit}`}
 				OFFSET ${Prisma.sql`${offset}`};
 			`;
 
-	
 			res.status(200).json({
 				status: 'success',
 				data: products,
@@ -386,7 +428,6 @@ export default class sellerController {
 			});
 
 			const vetResponse: string = await vetProduct(product);
-			console.log(vetResponse);
 
 			const scoreMatch = vetResponse.match(
 				/Sustainability Score:\s*(\d{1,3})/ // Matches the score, considering potential leading spaces
@@ -412,48 +453,55 @@ export default class sellerController {
 			let embedding;
 
 			if (sustainabilityScore === '0') {
+				sendEmail({inconclusive: true}, req.user.email, '', '', product);
 				message =
 					'Thank you for your submission. Based on our initial assessment, the available data was insufficient for a definitive sustainability evaluation. We invite you to apply for extended vetting, which provides an extended in-person review to help determine if your product meets our sustainability criteria for listing';
 			} else if (sustainabilityScore === '0.5') {
+				sendEmail({mismatch: true}, req.user.email, '', '', product);
 				message =
 					'Thank you for your submission. However, our initial assessment identified a significant mismatch between the provided product description and the uploaded images. Due to this discrepancy, we are unable to evaluate the sustainability of your product. We recommend updating your listing with accurate details and images that align with the product description before resubmitting for review.';
 				approvalStatus = 'REJECTED';
 			} else {
-				message =
-					'Congratulations! Your product has met our sustainability criteria and has been approved for listing on our eco-friendly marketplace. Thank you for contributing to a more responsible and sustainable future.';
-				approvalStatus = 'APPROVED';
 				if (Number(sustainabilityScore) < 50) {
+					sendEmail({rejection: true}, req.user.email, '', '', product);
 					approvalStatus = 'REJECTED';
 					message =
 						'Thank you for your submission. Unfortunately, after a comprehensive sustainability evaluation, your product did not meet our minimum standards and will not be listed. Please review our guidelines for further improvements and consider resubmitting in the future.';
-				}
-
-				product = {
-					...product,
-					sustainabilityTag,
-					sustainabilityScore,
-					sustainabilityScoreReason,
-					approvalStatus,
-				};
-
-				embedding = await generateProductEmbedding(product);
-
-				if (certificateFile) {
-					certificateExists = true; // for frontend
-					approvalStatus = 'PENDING';
+				} else {
+					sendEmail({success: true}, req.user.email, '', '', product);
 					message =
-						"Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
-					sendEmail(
-						'certificate',
-						req.user.email as string,
-						'',
-						'',
-						product
-					);
+						'Congratulations! Your product has met our sustainability criteria and has been approved for listing on our eco-friendly marketplace. Thank you for contributing to a more responsible and sustainable future.';
+					approvalStatus = 'APPROVED';
 				}
+			} 
+			
+			if (certificateFile) {
+				certificateExists = true; // for frontend
+				approvalStatus = 'PENDING';
+				message =
+					"Thank you for your submission. Based on our assessment, we require 24 to 48 hours to verify the validity of your certificate. This process ensures your certification's credibility and product's alignment with our sustainability criteria for listing. We appreciate your patience and commitment to eco-conscious practices";
+				// send email to admin
+				sendEmail(
+					'certificate',
+					req.user.email as string,
+					'',
+					'',
+					product
+				);
+
+				// send email to seller
+				sendEmail({certificate: true}, req.user.email, '', '', product);
 			}
 
-			console.log(sustainabilityScore, sustainabilityScoreReason, sustainabilityTag)
+			product = {
+				...product,
+				sustainabilityTag,
+				sustainabilityScore,
+				sustainabilityScoreReason,
+				approvalStatus,
+			};
+
+			embedding = await generateProductEmbedding(product);
 
 			await prisma.$executeRawUnsafe(
 				`
@@ -497,6 +545,15 @@ export default class sellerController {
 				include: {
 					reviews: true,
 					seller: true,
+					orderItems: {
+						include: {
+							order: {
+								include: {
+									transaction: true
+								}
+							}
+						}
+					}
 				},
 			});
 
@@ -538,8 +595,12 @@ export default class sellerController {
 				where: { id: productId },
 			});
 
-			res.status(204).end();
+			res.status(200).json({
+				status: "success",
+				message: "Product has been delisted successfully",
+			});
 		} catch (error) {
+			console.error(error);
 			next(error);
 		}
 	}

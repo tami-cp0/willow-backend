@@ -77,7 +77,7 @@ export default class customerController {
 		try {
 			await validateUpdateCustomerProfileDto(req);
 
-			const { firstname, lastname, address } = req.body;
+			const { firstname, lastname, address, subscribed } = req.body;
 			const userId = req.params.userId;
 
 			const user = await prisma.customer.update({
@@ -86,6 +86,7 @@ export default class customerController {
 					firstname,
 					lastname,
 					address,
+					subscribed
 				},
 				include: {
 					user: true,
@@ -178,6 +179,19 @@ export default class customerController {
 		try {
 			await validateDeleteCartItemDto(req);
 			const { userId, productId } = req.params;
+
+			const product = await prisma.cartItem.findUnique({
+				where: {
+					cartId_productId: {
+						cartId: userId,
+						productId,
+					},
+				},
+			});
+
+			if (!product) {
+				return next(new ErrorHandler(404, 'Cart item is no longer in cart'));
+			}
 
 			// Delete the cart item using the composite unique key.
 			await prisma.cartItem.delete({
@@ -570,7 +584,7 @@ export default class customerController {
 			const { userId } = req.params;
 			const { userQuery } = req.body;
 
-			const { text, history, instruction } = await processUserQuery(
+			const { response, history, instruction } = await processUserQuery(
 				userQuery,
 				userId
 			);
@@ -581,7 +595,7 @@ export default class customerController {
 			};
 			const newHistoryEntryModel = {
 				role: 'model',
-				parts: [{ text }],
+				parts: [{ text: response }],
 			};
 			const updatedHistory = [
 				...history,
@@ -605,9 +619,9 @@ export default class customerController {
 				data: { history: updatedHistory },
 			});
 
-			res.status(201).json({
+			res.status(200).json({
 				status: 'success',
-				data: text,
+				data: { response },
 			});
 		} catch (error) {
 			next(error);
@@ -616,98 +630,120 @@ export default class customerController {
 
 	static async computeRecommendations(userId: string) {
 		try {
-			const hasInteractions: { exists: boolean }[] = await prisma.$queryRaw`
+			// Check user interactions
+			const hasInteractions = await prisma.$queryRaw<{exists: boolean}[]>`
 				SELECT EXISTS (
 					SELECT 1 FROM liked_products WHERE customer_id = ${userId}
 					UNION 
 					SELECT 1 FROM last_viewed WHERE customer_id = ${userId}
+					UNION
+					SELECT 1 FROM reviews WHERE customer_id = ${userId}
+					UNION
+					SELECT 1 FROM orders o
+					JOIN transactions t ON o.id = t.order_id
+					WHERE t.customer_id = ${userId} AND t.status = 'SUCCESS'
 				) AS exists;
 			`;
-
-			const userHasInteractions = hasInteractions[0].exists;
-
-			let result: {embedding: number[], weight: number}[] | number;
-
+	
+			const userHasInteractions = hasInteractions[0]?.exists ?? false;
+	
 			if (!userHasInteractions) {
-				result = await prisma.$executeRaw`
-					WITH selected_products AS (
+				await prisma.$transaction(async (tx) => {
+					const selectedProducts = await tx.$queryRaw<{id: string}[]>`
 						SELECT id FROM products
-						WHERE approval_status = 'APPROVED'::"ApprovalStatus"
-						ORDER BY random()
+						WHERE approval_status = 'APPROVED'::\"ApprovalStatus\"
+						ORDER BY RANDOM()
 						LIMIT 5
-					)
-					INSERT INTO recommendations (product_id, customer_id, updated_at)
-					SELECT id, ${Prisma.sql`${userId}`}, NOW() FROM selected_products
-					WHERE (SELECT COUNT(*) FROM selected_products) = 5;
-				`;
+					`;
+	
+					if (selectedProducts.length === 5) {
+						await tx.$executeRaw`DELETE FROM recommendations WHERE customer_id = ${userId}`
+						await tx.$executeRaw`
+							INSERT INTO recommendations (product_id, customer_id, updated_at)
+							VALUES ${Prisma.join(
+								selectedProducts.map(p => Prisma.sql`(${p.id}, ${userId}, NOW())`)
+							)};
+						`;
+					}
+				});
 			} else {
-				// use half life formula to check how decay rate drops influence over time
-				const decayRate: Record<string, number> = {
+				const decayRates = {
 					like: 0.005,
 					view: 0.02,
 					review: 0.002,
 					order: 0.01
-				}
-
-				result = await prisma.$queryRaw`
+				};
+	
+				const interactions = await prisma.$queryRaw<{embedding: number[], weight: number}[]>`
 					SELECT 
-						p.embedding, 
-						(lp.weight * EXP(-${decayRate.like} * EXTRACT(EPOCH FROM (NOW() - lp.created_at)) / 86400)) AS weight
+						string_to_array(trim(both '[]' from p.embedding::text), ',')::double precision[] AS embedding, 
+						(lp.weight * EXP(-${decayRates.like} * EXTRACT(EPOCH FROM (NOW() - lp.created_at)) / 86400)) AS weight
 					FROM liked_products lp
 					JOIN products p ON lp.product_id = p.id
-
+					WHERE lp.customer_id = ${userId}
+	
 					UNION ALL
-
+	
 					SELECT 
-						p.embedding, 
-						(lv.weight * EXP(-${decayRate.view} * EXTRACT(EPOCH FROM (NOW() - lv.viewed_at)) / 86400)) AS weight
+						string_to_array(trim(both '[]' from p.embedding::text), ',')::double precision[] AS embedding, 
+						(lv.weight * EXP(-${decayRates.view} * EXTRACT(EPOCH FROM (NOW() - lv.viewed_at)) / 86400)) AS weight
 					FROM last_viewed lv
 					JOIN products p ON lv.product_id = p.id
-
+					WHERE lv.customer_id = ${userId}
+	
 					UNION ALL
-
+	
 					SELECT 
-						p.embedding, 
-						(r.weight * EXP(-${decayRate.review} * EXTRACT(EPOCH FROM (NOW() - r.created_at)) / 86400)) AS weight
+						string_to_array(trim(both '[]' from p.embedding::text), ',')::double precision[] AS embedding, 
+						(r.weight * EXP(-${decayRates.review} * EXTRACT(EPOCH FROM (NOW() - r.created_at)) / 86400)) AS weight
 					FROM reviews r
 					JOIN products p ON r.product_id = p.id
-
+					WHERE r.customer_id = ${userId}
+	
 					UNION ALL
-
+	
 					SELECT 
-						p.embedding, 
-						(o.weight * EXP(-${decayRate.order} * EXTRACT(EPOCH FROM (NOW() - o.created_at)) / 86400)) AS weight
+						string_to_array(trim(both '[]' from p.embedding::text), ',')::double precision[] AS embedding, 
+						(o.weight * EXP(-${decayRates.order} * EXTRACT(EPOCH FROM (NOW() - t.created_at)) / 86400)) AS weight
 					FROM orders o
 					JOIN transactions t ON o.id = t.order_id
 					JOIN order_items ot ON o.id = ot.order_id
 					JOIN products p ON ot.product_id = p.id
-					WHERE t.status = 'SUCCESS'
+					WHERE t.customer_id = ${userId} AND t.status = 'SUCCESS'
 				`;
-			}
+	
+				if (interactions.length > 0) {
+					const normalizedEmbedding = getNormalizedWeightedSum(interactions);
+					
+					await prisma.$transaction(async (tx) => {
+						const similarProducts = await tx.$queryRaw<{id: string}[]>`
+							WITH similar_products AS (
+								SELECT
+									id,
+									(embedding <=> ${Prisma.sql`ARRAY[${Prisma.join(normalizedEmbedding)}]::vector`}) AS similarity
+								FROM products
+								WHERE approval_status = 'APPROVED'::\"ApprovalStatus\"
+								ORDER BY similarity ASC
+								LIMIT 5
+							)
+							SELECT id FROM similar_products;
+						`;
 
-			if (typeof result !== "number") {
-				if (result.length !== 0) {
-					const normalizedEmbedding = getNormalizedWeightedSum(result);
-					const normalizedEmbeddingArray = Prisma.sql`ARRAY[${Prisma.join(normalizedEmbedding)}]::vector`;
-
-					await prisma.$queryRaw`
-						WITH similar_products AS (
-							SELECT
-								*,
-								(embedding <=> ${normalizedEmbeddingArray}) AS similarity
-							FROM products
-							WHERE approval_status = 'APPROVED'::"ApprovalStatus"
-							ORDER BY similarity ASC
-							LIMIT 5
-						)
-						INSERT INTO recommendations (product_id, customer_id, updated_at)
-						SELECT id, ${Prisma.sql`${userId}`}, NOW() FROM similar_products
-						WHERE (SELECT COUNT(*) FROM similar_products) = 5;
-					`;
+						if (similarProducts.length === 5) {
+							await tx.$executeRaw`DELETE FROM recommendations WHERE customer_id = ${userId}`
+							await tx.$executeRaw`
+								INSERT INTO recommendations (product_id, customer_id, updated_at)
+								VALUES ${Prisma.join(
+									similarProducts.map(p => Prisma.sql`(${p.id}, ${userId}, NOW())`)
+								)};
+							`;
+						}
+					});
 				}
 			}
 		} catch (error) {
-			throw new ErrorHandler(500, "Recommendations computation error");
+			console.error('Recommendations computation error:', error);
+			throw new ErrorHandler(500, "Failed to compute recommendations");
 		}
 	}
 

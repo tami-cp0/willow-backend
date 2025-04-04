@@ -15,6 +15,8 @@ config();
 
 const app = express();
 
+const wsInstance = expressWs(app, undefined, { leaveRouterUntouched: true });
+
 const port: number = Number(process.env.PORT) || 3000;
 const host: string = '0.0.0.0';
 const backendURL: string = process.env.BACKEND_URL as string;
@@ -38,12 +40,10 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(router);
-
-// avoiding circular depepndecies and gloal vairbales
-const wsInstance = expressWs(app, undefined, { leaveRouterUntouched: true });
 const chatRouter = createChatRouter(wsInstance);
 app.use('/api/v1/chat', chatRouter);
+
+app.use(router);
 
 const GREEN = '\x1b[32m%s\x1b[0m';
 const RED = '\x1b[31m%s\x1b[0m';

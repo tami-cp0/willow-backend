@@ -1,23 +1,31 @@
 import { WebSocket } from 'ws';
 import prisma from '../app';
 import { User, Role } from '@prisma/client';
+import { sendEmail } from '../utils/sendEmails';
 
 // Track active connections, temporarily in-memory
-const activeConnections: Map<string, WebSocket> = new Map();
+export const activeConnections: Map<string, WebSocket> = new Map();
 
 export default class ChatController {
   // Set up connection and event handlers
   static setupConnection(ws: WebSocket, user: User) {
+    // delete before setting
+    if (activeConnections.has(user.id)) {
+      activeConnections.get(user.id)?.close();
+      activeConnections.delete(user.id);
+    }
     activeConnections.set(user.id, ws);
 
     // Set up ping/pong to keep connection alive
     const pingInterval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
+      if (ws.readyState === 1) {
         ws.ping();
       } else {
+        activeConnections.get(user.id)?.close();
+        activeConnections.delete(user.id);
         clearInterval(pingInterval);
       }
-    }, 30000);
+    }, 5000);
 
     ws.on('close', () => {
         activeConnections.delete(user.id);
@@ -39,14 +47,19 @@ export default class ChatController {
   static async handleMessage(ws: WebSocket, message: string, user: User) {
     try {
       const parsedMessage = JSON.parse(message);
-      
-      if (!parsedMessage.data) {
+
+      // data = { conversationId, content, recipientId }
+      if (
+        !parsedMessage.data ||
+        (!parsedMessage.data.content || !parsedMessage.data.recipientId)
+      ) {
         ws.send(JSON.stringify({
           type: 'error',
-          data: { message: 'Invalid message format' }
+          data: { message: 'Missing required fields in message data - (content, recipientId)' }
         }));
         return;
       }
+      
       await ChatController.handleChatMessage(ws, parsedMessage.data, user);
 
     } catch (error) {
@@ -63,43 +76,22 @@ export default class ChatController {
     const { conversationId, content } = data;
     let recipientId = data.recipientId;
 
-    if (!content || content.trim() === '') {
-      ws.send(JSON.stringify({
-        type: 'error',
-        data: { message: 'Message content cannot be empty' }
-      }));
-      return;
-    }
-
     try {
+      if (!content || content.trim() === '') {
+        ws.send(JSON.stringify({
+          type: 'error',
+          data: { message: 'Message content cannot be empty' }
+        }));
+        return;
+      }
+      
       let conversation;
       
       // If no conversationId, check if we need to create a new conversation
       if (!conversationId) {
-        if (!recipientId) {
-          ws.send(JSON.stringify({
-            type: 'error',
-            data: { message: 'Either conversationId or recipientId is required' }
-          }));
-          return;
-        }
-
         // Determine roles for the conversation
-        let customerId, sellerId;
-        
-        if (user.role === Role.CUSTOMER) {
-          customerId = user.id;
-          sellerId = recipientId;
-        } else if (user.role === Role.SELLER) {
-          sellerId = user.id;
-          customerId = recipientId;
-        } else {
-          ws.send(JSON.stringify({
-            type: 'error',
-            data: { message: 'Only customers and sellers can create conversations' }
-          }));
-          return;
-        }
+        const customerId = user.role === Role.CUSTOMER ? user.id : recipientId;
+        const sellerId = user.role === Role.SELLER ? user.id : recipientId;
 
         // Check if conversation already exists
         conversation = await prisma.conversation.findUnique({
@@ -111,14 +103,21 @@ export default class ChatController {
           }
         });
 
-        // Create a new conversation if it doesn't exist
+        // Create a new conversation atomically if it doesn't exist
         if (!conversation) {
-          conversation = await prisma.conversation.create({
-            data: {
+          conversation = await prisma.conversation.upsert({
+            where: {
+              customerId_sellerId: {
+                customerId,
+                sellerId,
+              },
+            },
+            update: {},
+            create: {
               customerId,
-              sellerId
-            }
-          });
+              sellerId,
+            },
+          });          
         }
       } else {
         // Get existing conversation
@@ -129,7 +128,7 @@ export default class ChatController {
         if (!conversation) {
           ws.send(JSON.stringify({
             type: 'error',
-            data: { message: 'Conversation not found' }
+            data: { message: 'Conversation not found - Invalid ID' }
           }));
           return;
         }
@@ -150,18 +149,17 @@ export default class ChatController {
         }
       }
 
-      // Determine the receiver of the message
-      let receiverId = user.role === Role.CUSTOMER 
-        ? conversation.sellerId 
-        : conversation.customerId;
-
       // Save the message to the database
       const newMessage = await prisma.message.create({
         data: {
           conversationId: conversation.id,
           senderId: user.id,
-          receiverId,
+          receiverId: recipientId,
           content,
+        },
+        include: {
+          receiver: true,
+          sender: true
         }
       });
 
@@ -182,12 +180,15 @@ export default class ChatController {
       }));
 
       // Send message to the recipient if they're online
-      const recipientWs = activeConnections.get(receiverId);
-      if (recipientWs && recipientWs.readyState === WebSocket.OPEN) {
+      const recipientWs = activeConnections.get(recipientId);
+      if (recipientWs && recipientWs.readyState === 1) {
         recipientWs.send(JSON.stringify({
           type: 'message',
           data: messageResponse
         }));
+      } else {
+        let senderName = user.role === Role.CUSTOMER ? (user as any)?.customer?.lastname : (user as any)?.seller?.businessName;
+        sendEmail('message', newMessage.receiver.email, '', '', null, null, { id: newMessage.conversationId, senderName, role: user.role });
       }
 
     } catch (error) {
@@ -197,11 +198,5 @@ export default class ChatController {
         data: { message: 'Failed to send message' }
       }));
     }
-  }
-
-  // Check if a user is online
-  static isUserOnline(userId: string): boolean {
-    const ws = activeConnections.get(userId);
-    return !!ws && ws.readyState === WebSocket.OPEN;
   }
 }

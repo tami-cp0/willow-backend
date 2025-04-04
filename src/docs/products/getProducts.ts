@@ -7,6 +7,7 @@
  *       Retrieves a paginated list of products with optional filtering by approval status.
  *       Each product includes details such as its name, description, images, stock,
  *       pricing, approval status, associated seller information, and reviews.
+ *       Approval status defaults to APPROVED
  *     tags:
  *       - Products
  *     parameters:
@@ -154,6 +155,14 @@
  *                               type: string
  *                               format: date-time
  *                               example: "2025-02-27T11:00:00Z"
+ *                       orderItems:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               example: "orderItem789"
  *                 pagination:
  *                   type: object
  *                   properties:

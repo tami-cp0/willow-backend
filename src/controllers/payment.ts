@@ -31,13 +31,14 @@ export default class PaymentController {
 
 		try {
 			// amonut in NGN
-			const {
+			let {
 				email,
 				amount,
 				address,
 				serviceFee,
 				deliveryFee,
-			} = req.body; // cartItems = [{ sellerId, productId, quantity, price }, ...]
+				cartItems,
+			} = req.body;
 			const userId = req.user.id;
 
 			if (userId !== req.params.userId || req.user.email !== email) {
@@ -47,17 +48,25 @@ export default class PaymentController {
 				return next(new ErrorHandler(403, 'Access denied'));
 			}
 
+			amount = amount ? JSON.parse(amount) : undefined;
+			serviceFee = serviceFee ? JSON.parse(serviceFee) : undefined;
+			deliveryFee = deliveryFee ? JSON.parse(deliveryFee) : undefined;
+
 			if (
 				!email ||
-				!amount ||
+				amount  == null ||
 				!address ||
-				!serviceFee ||
-				!deliveryFee
+				serviceFee == null ||
+				deliveryFee == null ||
+				!cartItems ||
+				!Array.isArray(cartItems) ||
+				cartItems.length === 0
 			) {
+				console.log(req.body)
 				return next(
 					new ErrorHandler(
 						400,
-						'One of the fields is missing (email, amount, address, cartItems, serviceFee, deliveryFee)'
+						'One of the fields is missing (email, amount, address, serviceFee, deliveryFee, cartItems)'
 					)
 				);
 			}
@@ -100,17 +109,21 @@ export default class PaymentController {
 			const reference = parsedData.data.reference;
 			const accessCode = parsedData.data.access_code;
 
-			// get cart items
-			const cart = await prisma.cart.findMany({
-				where: {
-					customerId: userId
-				},
-				include: {
-					cartItems: true
-				}
-			}) as any;
+			// // get cart items
+			// const cart = await prisma.cart.findUnique({
+			// 	where: {
+			// 		customerId: userId
+			// 	},
+			// 	include: {
+			// 		cartItems: {
+			// 			include: {
+			// 				product: true
+			// 			}
+			// 		}
+			// 	}
+			// }) as any;
 
-			const cartItems: CartItem[] = cart.cartItems
+			// const cartItems: CartItem[] = cart.cartItems
 
 			// Create the order, order items, and transaction in one Prisma query
 			const order = await prisma.order.create({

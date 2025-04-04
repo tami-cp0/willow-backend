@@ -2,13 +2,21 @@
  * @openapi
  * /customers/{userId}/ai-conversation:
  *   get:
- *     summary: Get AI chat conversation
+ *     summary: Retrieve AI chat conversation
  *     description: >
- *       Retrieves the AI chat conversation record for the specified customer.
- *       The response contains the AIChat object, including the chat history.
+ *       Retrieves the AI chat conversation for the specified customer. If no conversation exists, one is created.
+ *       The returned conversation includes:
+ *         - **id**: The conversation ID.
+ *         - **customerId**: The customer’s user ID.
+ *         - **status**: The conversation status (OPEN or CLOSED).
+ *         - **history**: An array of conversation history entries (after removing the initial system instruction).
+ *           Each history entry is an object with:
+ *             - **role**: The role of the sender ("user" or "model").
+ *             - **parts**: An array of objects, each with a **text** property.
  *       This endpoint requires cookie-based authentication.
  *     tags:
  *       - Customers
+ *       - AI Chat
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -40,13 +48,11 @@
  *                       example: "cust123"
  *                     status:
  *                       type: string
+ *                       enum: [OPEN, CLOSED]
  *                       example: "OPEN"
  *                     history:
  *                       type: array
- *                       description: >
- *                         An array of conversation history entries. Each entry is an object with:
- *                         - **role**: the role of the sender ("user" or "model")
- *                         - **parts**: an array of objects, each containing a "text" property.
+ *                       description: Array of conversation history entries (after removing system instructions).
  *                       items:
  *                         type: object
  *                         properties:
@@ -60,10 +66,21 @@
  *                               properties:
  *                                 text:
  *                                   type: string
- *                                   example: "Hi, how can I help you?"
+ *                                   example: "do you sell shoes?"
+ *                     isFlagged:
+ *                       type: boolean
+ *                       example: false
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2025-03-01T12:00:00Z"
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2025-03-01T12:05:00Z"
  *             examples:
- *               sampleAIChat:
- *                 summary: Sample AI chat conversation (system instruction removed)
+ *               fullHistoryExample:
+ *                 summary: Full conversation history sample
  *                 value:
  *                   status: "success"
  *                   data:
@@ -73,10 +90,51 @@
  *                     history:
  *                       - role: "user"
  *                         parts:
- *                           - text: "Hi, how can I help you?"
+ *                           - text: "do you sell shoes?"
  *                       - role: "model"
  *                         parts:
- *                           - text: "Hello! What can I do for you today?"
+ *                           - text: {
+ *                               "text": "Yes, we do! Here's one example of a shoe we currently offer:",
+ *                               "products": [
+ *                                 {
+ *                                   "id": "01JQA3P4SABHC25ZFCSJ8RRGR7",
+ *                                   "name": "Nike jordan",
+ *                                   "price": 25000,
+ *                                   "images": [
+ *                                     {
+ *                                       "key": "1743022394998-jordan(1).jpg",
+ *                                       "url": "https://pub-98b899a5168d4e2285d560ccb413a7f5.r2.dev/1743022394998-jordan(1).jpg",
+ *                                       "size": 11454,
+ *                                       "mimetype": "image/jpeg",
+ *                                       "originalname": "jordan(1).jpg"
+ *                                     },
+ *                                     {
+ *                                       "key": "1743022394998-jordan(1).jpg",
+ *                                       "url": "https://pub-98b899a5168d4e2285d560ccb413a7f5.r2.dev/1743022394998-jordan(1).jpg",
+ *                                       "size": 11454,
+ *                                       "mimetype": "image/jpeg",
+ *                                       "originalname": "jordan(1).jpg"
+ *                                     }
+ *                                   ],
+ *                                   "category": "Shoe",
+ *                                   "in_stock": null,
+ *                                   "sold_out": false,
+ *                                   "sourcing": "INTERNATIONALLY_SOURCED",
+ *                                   "on_demand": true,
+ *                                   "packaging": "PAPERBOARD_BOX",
+ *                                   "seller_id": "01JQA1XGP250E0VF5AY5XZMP9W",
+ *                                   "created_at": "2025-03-26T20:53:16.203Z",
+ *                                   "similarity": 0.5294676566466014,
+ *                                   "description": "black and white nike jordan shoe that can be worn anywhere",
+ *                                   "businessName": "PureBody ltd.",
+ *                                   "end_of_life_info": "",
+ *                                   "sustainability_tag": "INCONCLUSIVE"
+ *                                 }
+ *                               ]
+ *                             }
+ *                     isFlagged: false
+ *                     createdAt: "2025-03-01T12:00:00Z"
+ *                     updatedAt: "2025-03-01T12:05:00Z"
  *       400:
  *         description: Validation error or bad request.
  *         content:
