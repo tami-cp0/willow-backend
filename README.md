@@ -165,16 +165,16 @@ Where:
 1. **User Profile Creation**: For users with interaction history, the system retrieves all product embeddings associated with their interactions
 2. **Weighted Vector Calculation**: A weighted vector sum is computed by:
 
-   $\vec{v}_{weighted} = \frac{\sum_{i=1}^{n} w_i \cdot \vec{v}_i}{\sum_{i=1}^{n} w_i}$
+   weighted_vector = (w₁·v₁ + w₂·v₂ + ... + wₙ·vₙ) / (w₁ + w₂ + ... + wₙ)
 
    Where:
-   - $\vec{v}_i$ is the embedding vector of the i-th product
-   - $w_i$ is the time-decayed weight of the i-th interaction
-   - $n$ is the total number of interactions
+   - vᵢ is the embedding vector of the i-th product
+   - wᵢ is the time-decayed weight of the i-th interaction
+   - n is the total number of interactions
 
 3. **Normalization**: The weighted sum is normalized to create a unit vector:
 
-   $\vec{v}_{normalized} = \frac{\vec{v}_{weighted}}{||\vec{v}_{weighted}||}$
+   normalized_vector = weighted_vector / ||weighted_vector||
 
 2. **Similarity Matching**: The system finds products with the closest embedding vectors using cosine similarity i.e *1 - (user profile embedding <=> other_products embeddings)* (implemented via PostgreSQL's vector operators)
 
