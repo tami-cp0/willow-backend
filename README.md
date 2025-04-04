@@ -36,13 +36,13 @@ Willow is an AI-powered online marketplace which hosts only *eco-friendly* produ
       - [Product Embedding Generation](#product-embedding-generation)
     - [AI-Assisted Vetting](#ai-assisted-vetting)
       - [Architecture Overview](#architecture-overview)
-      - [Technical Implementation](#technical-implementation-1)
+      - [Implementation](#implementation)
       - [Evaluation Protocol](#evaluation-protocol)
       - [Special Evaluation Cases](#special-evaluation-cases)
       - [Output Format](#output-format)
     - [RAG-Based Customer Chat System](#rag-based-customer-chat-system)
       - [System Architecture](#system-architecture)
-      - [Technical Implementation](#technical-implementation-2)
+      - [Technical Implementation](#technical-implementation-1)
       - [Implementation Details](#implementation-details)
   - [Future Implementations](#future-implementations)
   - [Contributing](#contributing)
@@ -164,21 +164,21 @@ Where:
 
 1. **User Profile Creation**: For users with interaction history, the system retrieves all product embeddings associated with their interactions
 2. **Weighted Vector Calculation**: A weighted vector sum is computed by:
-   
+
    $\vec{v}_{weighted} = \frac{\sum_{i=1}^{n} w_i \cdot \vec{v}_i}{\sum_{i=1}^{n} w_i}$
-   
+
    Where:
    - $\vec{v}_i$ is the embedding vector of the i-th product
    - $w_i$ is the time-decayed weight of the i-th interaction
    - $n$ is the total number of interactions
 
 3. **Normalization**: The weighted sum is normalized to create a unit vector:
-   
+
    $\vec{v}_{normalized} = \frac{\vec{v}_{weighted}}{||\vec{v}_{weighted}||}$
 
-4. **Similarity Matching**: The system finds products with the closest embedding vectors using cosine similarity i.e *1 - (user profile embedding <=> other_products embeddings)* (implemented via PostgreSQL's vector operators)
+2. **Similarity Matching**: The system finds products with the closest embedding vectors using cosine similarity i.e *1 - (user profile embedding <=> other_products embeddings)* (implemented via PostgreSQL's vector operators)
 
-5. **Database Update**: The top 5 most similar products are stored in the recommendations table for fast retrieval
+3. **Database Update**: The top 5 most similar products are stored in the recommendations table for fast retrieval
 
 #### Scheduled Updates Architecture
 
@@ -211,7 +211,7 @@ The platform implements an AI-assisted sustainability evaluation system that aut
 - **Standardized Scoring**: Implements a consistent 0-100 scoring system with clear thresholds
 - **Real-Time Feedback**: Provides immediate sustainability assessments during the product submission flow
 
-#### Technical Implementation
+#### Implementation
 
 The vetting system operates through a sophisticated pipeline:
 
