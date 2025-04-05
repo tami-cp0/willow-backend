@@ -78,20 +78,20 @@ async function startServer() {
 }
 
 // to keep render and redis alive
-cron.schedule('*/15 * * * *', async () => {
-    if (backendURL) {
-        https.get(`${backendURL}/api/v1/ping`).on('error', (error) => {
-            console.error('Error pinging server:', error);
-        });
-    }
+// cron.schedule('*/15 * * * *', async () => {
+//     if (backendURL) {
+//         https.get(`${backendURL}/api/v1/ping`).on('error', (error) => {
+//             console.error('Error pinging server:', error);
+//         });
+//     }
 
-    if (cache.connected) {
-        try {
-            await cache.client.set('keep-alive-key', 'keep-alive-value', { EX: 15 * 60 });
-        } catch (error) {
-            console.error('Error setting keep-alive cache:', error);
-        }
-    }
-});
+//     if (cache.connected) {
+//         try {
+//             await cache.client.set('keep-alive-key', 'keep-alive-value', { EX: 15 * 60 });
+//         } catch (error) {
+//             console.error('Error setting keep-alive cache:', error);
+//         }
+//     }
+// });
 
 startServer();
