@@ -2,8 +2,9 @@
 
 ![site picture](./assets/willow-shop.png)
 Links:
-- [Frontend](https://willow-frontend.vercel.app)
-- [Backend (API documentation)](https://willow-backend.onrender.com)
+- [![Frontend](https://img.shields.io/badge/Live%20Site-willow--frontend.vercel.app-green)](https://willow-frontend.vercel.app)
+- [![Backend API](https://img.shields.io/badge/Backend-Docs-blue)](https://willow-backend.onrender.com)
+
 
 ## Description
 
